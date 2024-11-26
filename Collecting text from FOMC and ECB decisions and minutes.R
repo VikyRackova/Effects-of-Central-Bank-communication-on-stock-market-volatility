@@ -566,8 +566,113 @@ write.csv(bigrams,file = "Bigrams.csv", row.names=FALSE)
 
 
 ######################################################## Hawk-score calculation ########################################################
+# Load all the text files and dictionary classifications
+Minutes_FED<-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/FOMC Minutes.csv")
+Minutes_ECB<-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/ECB Accounts.csv")
+Decisions_FED<-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/FOMC Statements.csv")
+Decisions_ECB<- read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/ECB Decisions.csv")
+All_terms <- read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/All terms.csv")
+Fourgrams<- read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/Fourgrams.csv")
+Trigrams <-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/Trigrams.csv")
+Bigrams <-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/Bigrams.csv")
+Four_grams <- Fourgrams %>%
+  mutate(term = str_replace_all(term, " ", "_"))
+Tri_grams<- Trigrams %>%
+  mutate(term = str_replace_all(term, " ", "_"))
+Bi_grams<- Bigrams %>%
+  mutate(term = str_replace_all(term, " ", "_"))
+
+### Unify the date format
+Minutes_FED<- Minutes_FED%>%
+  mutate(Date = sapply(Date, standardize_date))
+Minutes_ECB <- Minutes_ECB%>%
+  mutate(Date = sapply(Date, standardize_date))
+Decisions_FED <- Decisions_FED%>%
+  mutate(Date = sapply(Date, standardize_date))
+Decisions_ECB <- Decisions_ECB%>%
+  mutate(Date = sapply(Date, standardize_date))
+
+### Split the data into sentences and clean it 
+Sentences_minutes_FED <- sentenceSplit(Minutes_FED)%>% # Split the text to sentences 
+  mutate(Cleaned_Text = sapply(sentence, clean_text))%>% # clean the text with a function 
+  group_by(Date) %>%
+  mutate(sentence_id = row_number()) %>%  # assign every sentence a number
+  ungroup()
+Sentences_minutes_ECB <- sentenceSplit(Minutes_ECB)%>% 
+  mutate(Cleaned_Text = sapply(sentence, clean_text))%>%
+  group_by(Date) %>%
+  mutate(sentence_id = row_number()) %>%  
+  ungroup()
+Sentences_decisions_FED <- sentenceSplit(Decisions_FED)%>% 
+  mutate(Cleaned_Text = sapply(sentence, clean_text))%>%
+  group_by(Date) %>%
+  mutate(sentence_id = row_number()) %>%  
+  ungroup()
+Sentences_decisions_ECB <- sentenceSplit(Decisions_ECB)%>% 
+  mutate(Cleaned_Text = sapply(sentence, clean_text))%>%
+  group_by(Date) %>%
+  mutate(sentence_id = row_number()) %>%  
+  ungroup()
           
+############################################# Checking for words in the term list #########################################3
+################################ Checking Fourgrams ################################   
+##### Decisions
+#ECB
+ECBD <- process_fourgrams(Sentences_decisions_ECB, Fourgrams, Four_grams)
+# FED
+FEDD <- process_fourgrams(Sentences_decisions_FED, Fourgrams, Four_grams)
+##### Minutes
+# ECB
+ECBM <- process_fourgrams(Sentences_minutes_ECB, Fourgrams, Four_grams)
+# FED
+FEDM <- process_fourgrams(Sentences_minutes_FED, Fourgrams, Four_grams)
 
           
+################################ Checking for Trigrams ################################          
+##### Decisions
+ECBD <- process_trigrams(ECBD, Trigrams, Tri_grams)
+# FED
+FEDD <- process_trigrams(FEDD, Trigrams, Tri_grams)
+##### Minutes
+# ECB
+ECBM <- process_trigrams(ECBM, Trigrams, Tri_grams)
+# FED
+FEDM <- process_trigrams(FEDM, Trigrams, Tri_grams)
+
+          
+################################ Checking for Bigrams ################################
+##### Decisions
+#ECB
+ECBD <- process_bigrams(ECBD, Bigrams, Bi_grams)
+#FED
+FEDD <-process_bigrams(FEDD, Bigrams, Bi_grams)
+##### Minutes
+#ECB
+ECBM <- process_bigrams(ECBM, Bigrams, Bi_grams)
+#FED
+FEDM <- process_bigrams(FEDM, Bigrams, Bi_grams)
+
+          
+################################ Retain Date, sentence id, sentence and word count pre sentence ################################          
+Clean_ECBD <- ECBD%>%
+  mutate(word_count = str_count(merged_sentence, "\\S+"))# create word count per sentence
+Clean_FEDD <- FEDD%>%
+  mutate(word_count = str_count(merged_sentence, "\\S+"))# create word count per sentence
+Clean_ECBM <- ECBM%>%
+  mutate(word_count = str_count(merged_sentence, "\\S+"))# create word count per sentence
+Clean_FEDM <- FEDM%>%
+  mutate(word_count = str_count(merged_sentence, "\\S+"))# create word count per sentence
 
 
+################################ Assign the score to all modifier and keyword combinations ################################          
+Scores_FEDD <-calculate_scores(Clean_FEDD, All_terms)
+Scores_FEDM <- calculate_scores(Clean_FEDM, All_terms)
+Scores_ECBD <- calculate_scores(Clean_ECBD, All_terms)
+Scores_ECBM <- calculate_scores(Clean_ECBM, All_terms)
+
+          
+################################ Calculate a standardized document score as well as score per topic ################################          
+topic_score_ECBM<-standardized_score_and_topic(Scores_ECBM)
+topic_score_ECBD<-standardized_score_and_topic(Scores_ECBD)
+topic_score_FEDD<-standardized_score_and_topic(Scores_FEDD)
+topic_score_FEDM<-standardized_score_and_topic(Scores_FEDM)
