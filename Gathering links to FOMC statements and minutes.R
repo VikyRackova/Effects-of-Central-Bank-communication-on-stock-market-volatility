@@ -1,5 +1,8 @@
 rm(list=ls())
+# Set your working directory
 setwd("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files")
+# Import all the functions
+source("Functions.R")
 # Required packages to download
 library(rvest)
 library(dplyr)
@@ -65,7 +68,7 @@ links_df1 <- data.frame(year = years, link = statement_links, stringsAsFactors =
 links_df1 <- links_df1[nrow(links_df1):1, ]
 ## Merge the two periods and create an excel file 
 Statements <- rbind(links,links_df1)
-write.xlsx(Statements, file = "FOMC Statements.xlsx")
+write.xlsx(Statements, file = "FOMC Statements links.xlsx")
 
 ######################################################## Save links to FOMC minutes ########################################################
 # Note: accessing the links for the minutes needs to be divided into several periods because of the difference in formatting
@@ -194,7 +197,7 @@ urls3 <- urls3[nrow(urls3):1, ]
 ## Merge all the periods and create an excel file 
 Minutes <- rbind(urls,urls1,urls2,urls3)
 colnames(Minutes)<-c("year","link")
-write.xlsx(Minutes, file = "FOMC Minutes.xlsx")
+write.xlsx(Minutes, file = "FOMC Minutes links.xlsx")
 
 
 ######################################################## Extracting Text and date from the links ########################################################
@@ -231,5 +234,40 @@ colnames(Decisions_ECB)<- c("Date","Text")
 #### Create a file with the processed data
 write.csv(Decisions_ECB,file = "ECB Decisions.csv",row.names=FALSE)
 
+############################## FED Minutes  ##############################
+# Load the file with the links 
+Minutes_file <- "C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/FOMC Minutes links.xlsx"
+FOMC_Minutes <- read_excel(Minutes_file)
+# Access each link in the data frame and extract text
+FOMC_Minutes <- FOMC_Minutes %>%
+  mutate(Text = sapply(link, extract_text_FED_minutes)) 
+# Extract precise date
+date <- str_extract(FOMC_Minutes$Text, "([A-Za-z]+ \\d{1,2}(-[A-Za-z]+ \\d{1,2})?, \\d{4})|([A-Za-z]+ \\d{1,2}, \\d{4})") 
+date<- as.data.frame(date)
+# Clean the file                               
+cleaned_files <- (cleaning_FED(FOMC_Minutes))
+Clean_FOMC_Minutes <- cbind(date, cleaned_files)
+colnames(Clean_FOMC_Minutes)<- c("Date","Text")
+write.csv(Clean_FOMC_Minutes,file = "FOMC Minutes.csv",row.names=FALSE
+
+          
+############################## FED Statements --> Decisions  ##############################          
+# Load the file with the links 
+Statements_file <- "C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/FOMC Statements links.xlsx"
+FOMC_Statements <- read_excel(Statements_file)
+# Access each link in the data frame and extract text
+FOMC_Statements <- FOMC_Statements %>%
+  mutate(Text = sapply(link, extract_text_FED_decisions)) 
+# Extract precise date
+dates <- str_extract(FOMC_Statements$Text, "([A-Za-z]+ \\d{1,2}(-[A-Za-z]+ \\d{1,2})?, \\d{4})|([A-Za-z]+ \\d{1,2}, \\d{4})")
+Date<- as.data.frame(dates)
+cleaned_filess <- (cleaning_FED(FOMC_Statements))
+#Create a data frame with only the data and the cleaned text
+Clean_FOMC_Statements <- cbind(Date, cleaned_filess)
+colnames(Clean_FOMC_Statements)<- c("Date","Text")
+#Save the results in a new file
+write.csv(Clean_FOMC_Statements,file = "FOMC Statements.csv",row.names = FALSE)
+        
+                          
 
 
