@@ -107,3 +107,14 @@ extract_text_for_date <- function(link) {
     return(NA)  # Return NA if there's an error
   })
 }
+
+### Function to convert list into data frame
+wordlist2dataframe <- function(wordlist, category, topic =""){
+  # Get rid of duplicates and sort the list alphabetically
+  wordlist <- sort(unique(wordlist))
+  # Create a data frame from the cleaned list
+  wordlist_df <- data.frame("term"=wordlist,
+                               "category"=rep(category,length(wordlist)),
+                               "topic"=rep(topic,length(wordlist)))
+  return(wordlist_df)
+}
