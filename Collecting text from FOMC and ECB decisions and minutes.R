@@ -269,7 +269,296 @@ Clean_FOMC_Statements <- cbind(Date, cleaned_filess)
 colnames(Clean_FOMC_Statements)<- c("Date","Text")
 #Save the results in a new file
 write.csv(Clean_FOMC_Statements,file = "FOMC Statements.csv",row.names = FALSE)
-        
+
+
+######################################################## Create a dictionary of terms for Hawk-score ########################################################
+high_modifiers <- c( "above", "accelerate", "accelerated", "accelerates", "accelerating", "added",
+                     "augment", "augmented", "augmenting", "augments", "big","bigger", "bigger than estimated", 
+                     "bigger than expected", "bigger than usual","biggest", "boost", "boosted",
+                     "boosting", "boosts", "brighter", "buoy", "buoyant", "buoyed", "buoying", "buoys",
+                     "climb", "climbed", "climbing", "climbs", "elevate", "elevated", "elevates",
+                     "elevating", "escalate", "escalated", "escalates", "escalating", "exceed", "exceeded",
+                     "exceeding", "exceeds", "excessive","expand", "expanded", "expanding", "expands",
+                      "expansionary", "fast", "faster", "faster than estimated", "faster than expected",
+                      "faster than usual","fastest","further", "further than estimated", 
+                     "further than expected", "further than usual","furthering", "gain", "gain", 
+                     "gaining", "gained", "grew", "grow", "growing", "grown", "grows", "hawk", "hawkish", 
+                     "high","higher", "higher than estimated", "higher than expected", "higher than usual",
+                     "highest", "hike", "hikes", "hiking", "impulse", "impulsed", "impulses", "impulsing",
+                     "increase", "increased", "increases", "increasing", "inflationary", "large",
+                     "larger", "larger than estimated", "larger than expected", "larger than usual",
+                     "largest", "lift", "lifted", "lifting","lifts", "maximum","more", "more than estimated", 
+                     "more than expected", "more than usual","mount", "mounted", "mounting", "mounts", "peak",
+                     "peaked", "peaking", "peaks", "pick up", "picked up", "picking up", "picks up", "raise",
+                     "raised", "raises", "raising", "ramp", "ramped", "ramping", "ramps", "rapid", "rise",
+                     "risen", "rises", "rising", "rose","show growth", "showed growth", "showing growth", 
+                     "shows growth","skyrocket", "skyrocketed", "skyrocketing", "skyrockets", "spike", "spiked",
+                     "spikes", "spiking", "spur", "spurred", "spurring", "spurs", "strengthen",
+                     "strengthened", "strengthening", "strengthens", "strong", "stronger", "stronger than estimated", 
+                     "stronger than expected", "stronger than usual","strongest", "surge", "surged", "surges", 
+                     "surging","swifter", "stronger than estimated", "stronger than expected", "stronger than usual",
+                     "tighten", "tightened", "tightening", "tightens", "tighter","upper", "upside", "upside risk", 
+                     "upside risks","upswing", "upswinging", "upswings", "upswung", "uptrend", "upturn", "upturned",
+                     "upturning", "upturns", "upward", "upwards", "upward risk", "upward risks",
+                     "upward trend", "upward trends", "upwards risk", "upwards risks","upwards trend", 
+                     "upwards trends","vigor", "vigorous", "widen", "widened", "widening", "widens", "wider")
+all_terms<- wordlist2dataframe(high_modifiers,"High modifier")
+
+positive_modifiers <- c( "accommodate", "accommodated", "accommodates", "accommodating","benign", "best",
+                         "better", "better than estimated", "better than expected", "better than usual",
+                         "calm", "calmed","calmer", "calmer than estimated", "calmer than expected", "calmer than usual",
+                         "calming", "calms","depreciation", "depreciate", "depreciated", "depreciating", "depreciates",
+                         "dynamic", "ease", "eases", "eased", "easing", "encouraging","excellent", "expansion", "expansionary", 
+                         "expansive","favorable", "favourable", "firmer", "good", "great","greater", "greater than estimated", 
+                         "greater than expected", "greater than usual","greatest","healthier", "healthier than estimated", 
+                         "healthier than expected", "healthier than usual","improve", "improved", "improves", "improving",
+                         "loose", "loosen", "loosened", "loosening", "loosens","looser", "looser than estimated", 
+                         "looser than expected", "looser than usual","mitigate", "mitigated", "mitigates", "mitigating", 
+                         "optimistic", "outperform","outperformed", "outperforming", "outperforms", "positive","recover", 
+                         "recovered", "recovering", "recovers","reinforce", "reinforced", "reinforces", "reinforcing",
+                         "restore", "restored", "restores", "restoring","satisfactory", "stabilise", "stabilised",
+                         "stabilises", "stabilising", "stabilize", "stabilized","stabilizes", "stabilizing", "stable",
+                         "stimulate", "stimulated", "stimulates", "stimulating","stimulative", "stimulatory", "steady", 
+                         "successful")
+all_terms<- rbind(all_terms,wordlist2dataframe(positive_modifiers,"Positive modifier"))
+
+low_modifiers<- c( "accommodate", "accommodating", "accommodative", "below", "bottom", "bottomed","bottoming", 
+                   "bottoms", "collapse", "collapsing", "collapsed","compress",  "compressed", "compression", 
+                   "contract", "contracted","contracting", "contraction", "contractions", "contractionary", "contracts",
+                   "cut", "cutting", "cuts","dampen", "dampened", "dampening", "dampens", "decelerate", "decelerated", 
+                   "decelerates","decelerating", "decline", "declined", "declines", "declining", "decrease", "decreased",
+                   "decreases", "decreasing", "deflationary","depress", "depressed", "depresses", "depressing",
+                   "descend", "descended", "descending", "descends", "diminish", "diminished","diminishes", "diminishing", 
+                   "disinflationary", "dove", "dovish", "down","downside", "downside risk", "downside risks", "downsides",
+                   "downsize", "downsized", "downsizes","downsizing", "downward", "downwards","downward trend ", 
+                   "downwards trend", "downward trends", "downwards trends","downward risk", "downwards risk", 
+                   "downward risks", "downwards risks","drop", "dropped", "dropping", "drops","erode", "eroded", 
+                   "erodes", "eroding", "fade","faded", "fades", "fading",  "fall", "fallen","falling", "falls", "fell",
+                   "fewer", "fewer than estimated", "fewer than expected", "fewer than usual","flatten", "flattened", 
+                   "flattening", "flattens", "hopeful","lagged", "lagging", "lagged behind", "lagging behind", "least",
+                   "less", "less than estimated", "less than expected", "less than usual","lost", "losing", "slowdown", 
+                   "low","lower", "lower than estimated", "lower than expected", "lower than usual","lowered", "lowering",
+                   "lowers", "lowest", "mild","minimal", "minimum", "minor", "moderate", "moderated", "moderates", "moderating",
+                   "modest", "negative", "recede", "receding", "recedes","recessionary", "reduce", "reduced",
+                   "reduces", "reducing", "reduction", "reductions","reversal of increases", "reversed increases", "sank", 
+                   "shorten", "shortened","shortening", "shortens", "shrink", "shrinking", "shrinks", "shrunk", "shrunken", 
+                   "sink","sinking", "slow", "slowed", "slower", "slowest", "slowing", "slows", "sluggish","slump", "slumping", 
+                   "small","smaller", "smaller than estimated", "smaller than expected", "smaller than usual","smallest", "soften", 
+                   "softened", "softening", "softens", "subside","subsides", "subsiding", "subdued","sunk", "suppress", "suppressed", 
+                   "suppresses", "suppressing","temper", "tempered", "tempering", "wane", "waned", "wanes", "waning")
+all_terms<- rbind(all_terms,wordlist2dataframe(low_modifiers,"Low modifier"))
+
+negative_modifiers <- c("adverse", "aggravate", "aggravated", "aggravates", "aggravating","appreciate", "appreciation", "appreciated", 
+                        "apppreciating", "appreciates","bad", "badly","challenging", "concern", "concerned", "concerning", "concerns", 
+                        "conservative","constrain", "constrained", "constraining", "constrains","deepen", "deepened", "deepening", 
+                        "deepens","deeper",  "deeper than estimated", "deeper than expected", "deeper than usual","destabilizing", 
+                        "deteriorate", "deteriorated", "deteriorates", "deteriorating", "difficult", "difficulty", "disappoint", 
+                        "disappointed", "disappointing","disappoints", "fail", "failed", "failing", "fails","fluctuate", "fluctuated",
+                        "fluctuates", "fluctuating", "fragile", "harm", "harmed", "harmful", "harming", "harms", "inconsistent", 
+                        "jeopardise", "jeopardised", "jeopardises","jeopardising", "jeopardize", "jeopardized", "jeopardizes", 
+                        "jeopardizing", "lackluster","pessimistic", "poor", "restrictive", "require support", "requiring support",
+                        "requires support",  "riskier", "risky", "stagnating", "stagnation","stress", "stressed", "stresses","stressful", 
+                        "stressing","stringent", "subprime", "tepid", "terrible","threaten", "threatened", "threatening","threatens", 
+                        "torrid", "tougher", "troubling", "troubled","turbulent", "uncertain","unclear", "undermine", "unfavorable", 
+                        "unfavourable", "unstable", "volatile","vulnerable", "weak", "weaken", "weakened","weakening", "weakens", 
+                        "weakness", "weaknesses", "weakest","weaker", "weaker than estimated", "weaker than expected","weaker than usual",
+                        "worrying","worse", "worse than estimated", "worse than expected", "worse than usual",
+                        "worsen", "worsened", "worsening", "worsens", "worst")
+all_terms<- rbind(all_terms,wordlist2dataframe(negative_modifiers,"Negative modifier"))
+
+negators <- c("anti", "aren t", "by no means",
+              "can t", "cannot", "cannot be", "cannot but be",
+              "halt", "halt a", "halt an", "halt the",
+              "halted", "halted the",
+              "halting", "halting the",
+              "halts", "halts the",
+              "nt", "not", "not a", "not an", "not the",
+              "not allow", "not allow a", "not allow an", "not allow the", "not be",
+              "not permit", "not permit a", "not permit an", "not permit the",
+              "prevent", "prevent a", "prevent an", "prevent the",
+              "preventing", "preventing a", "preventing an", "preventing the",
+              "prevents",  "prevents a", "prevents an", "prevents the",
+              "not permit a", "not permit an", "not permit the",
+              "not rule out", "not rule out a", "not rule out an", "not rule out the",
+              "reverse", "reverse the", "reverse a", "reverse an",
+              "reversed", "reversed the", "reversed a", "reversed an",
+              "reverses", "reverses the", "reverses a", "reverses an",
+              "reversing", "reversing the", "reversing a", "reversing an",
+              "reversal of", "reversal of the")
+all_terms<- rbind(all_terms,wordlist2dataframe(negators,"Negator"))
+
+############################# HAWKISH keywords #############################
+policy_hawk <- c("bank rate", "board member", "board members", "central bank", "central banks",
+                 "committee member",  "committee members", "core rates", "deposit rates",
+                 "euribor", "interbank interest rate",
+                 "interbank rate", "interbank rates", "interest rate", "interest rates",
+                 "libor", "lombard rate",
+                 "marginal standing facility", "market rates", "monetary conditions",
+                 "monetary policy", "monetary policy action", "monetary policy actions",
+                 "monetary policy instrument", "monetary policy instruments",
+                 "monetary policy stance", "monetary policy stances",
+                 "monetary policies", "monetary stance", "monetary stances",
+                 "money demand", "money supply",
+                 "policy action", "policy actions", "policy decision", "policy decisions",
+                 "policy instrument", "policy instruments", "policy stance", "policy stances",
+                 "policy repo rate", "policy rate", "policy rates",
+                 "pribor", "rates",
+                 "repo rate", "repo rates", "reserve bank", "reverse repo rate", "reverse repo rates",
+                 "selic rate","swap rates")
+all_terms<- rbind(all_terms,wordlist2dataframe(policy_hawk, "Hawkish Keyword", topic = "Policy"))
+
+growth_hawk <- c("activity", "aggregate demand", "capacity utilisation", "capacity utilization",
+                 "capital expenditure", "capital formation", "capital investment", "capital spending",
+                 "consumption", "consumption expenditure", "consumer spending",
+                 "demand", "demand side", "disposable income",
+                 "domestic demand", "domestic economy", "domestic growth",
+                 "economic", "economic activity", "economic conditions",
+                 "economic development", "economic growth", "economic output",
+                 "economic recovery", "employment",
+                 "employment growth", "expenditure", "expenditure growth",
+                 "growth", "growth outlook", "growth expectations",
+                 "growth forecast", "growth forecasts", "growth prospects",
+                 "gdp", "gdp growth",
+                 "household consumption", "household income", "household spending",
+                 "industrial", "industrial production", "investment",
+                 "inventory", "inventories",
+                 "labor market", "labour market", "labour productivity", "manufacturing",
+                 "output", "output gap", "output growth",
+                 "pmi", "private consumption", "production", "productivity",
+                 "recovery", "retail sales",
+                 "services sector", "spending", "supply side")
+all_terms<- rbind(all_terms,wordlist2dataframe(growth_hawk, "Hawkish Keyword", topic = "Growth"))
+
+prices_hawk <- c("commodity price", "commodity prices", "consumer price", "consumer prices",
+                 "core inflation", "cost",  "costs",
+                 "consumer price index", "cpi", "cpi inflation", "domestic inflation",
+                 "energy price", "energy prices", "expected inflation", "food inflation",
+                 "food price", "food prices",
+                 "headline inflation", "house price", "house prices", "inflation",
+                 "inflation expectation", "inflation expectations", 
+                 "inflation outlook", "inflationary pressures", "inflationary pressure",
+                 "inflation projection", "inflation projections",
+                 "inflation report", "inflation risk", "inflation risks", "inflation target",
+                 "inflationary expectation", "inflationary expectations",
+                 "inflation data", "inflation prediction", "inflation forecast", "inflation forecats",
+                 "inflationary pressure", "inflationary pressure", "inflationary pressures",
+                 "inflationary risk", "inflationary risks",
+                 "labour cost", "labour costs", "minimum wage", "minimum wages",
+                 "oil", "oil price", "oil prices",
+                 "price", "price growth", "price inflation", "prices", "prices growth",
+                 "producer price", "producer prices", "producer price index",
+                 "underlying inflation", "unit labour cost", "unit labour costs",
+                 "wage", "wage growth", "wages", "wages growth")
+all_terms<- rbind(all_terms,wordlist2dataframe(prices_hawk, "Hawkish Keyword", topic = "Prices"))
+
+finance_hawk <- c("asset price", "asset prices",
+                  "banks", "banking system",  "banking sector", "banking sector",
+                  "capital flows", "credit", "credit growth", "commercial paper",
+                  "dollar", "euro", "euro area",
+                  "exchange rate", "exchange rates", "equity", "equities", "equity market", "equity markets",
+                  "financial conditions", "financial market", "financial markets",
+                  "financial sector", "financial services", "financial system", "financial systems",
+                  "foreign currency", "foreign currencies", "foreign exchange",
+                  "global financial", "investors", "lending", "liquidity", "liquidity conditions",
+                  "loan", "securities", "us dollar")
+all_terms<- rbind(all_terms,wordlist2dataframe(finance_hawk, "Hawkish Keyword", topic = "Finance"))
+
+global_hawk <- c("advanced country", "advanced countries", "advanced economy", "advanced economies",
+                 "capital flows", "current account", "china",
+                 "developed markets", "developed economies", "exports",
+                 "emerging economy", "emerging economies", "emerging market", "emerging markets",
+                 "emerging country", "emerging countries",
+                 "europe", "european", "european central bank",
+                 "export", "exports", "net exports", "export growth", "exports growth",
+                 "federal reserve",
+                 "global", "global economic", "global economic growth", "global economic activity",
+                 "global economy", "global growth", "global outlook",
+                 "global recovery",
+                 "international", "international growth", "japan", "japanese",
+                 "trade", "trading partners",
+                 "united states", "usa", "us rates",
+                 "world economic activity", "world economic growth",
+                 "world economy", "world growth")
+all_terms<- rbind(all_terms,wordlist2dataframe(global_hawk, "Hawkish Keyword", topic = "Global"))
+          
+other_hawk <- c("confidence", "housing", "housing market", "sentiment", "surplus",
+                "vaccine", "vaccines", "vaccination", "vaccinations")
+all_terms<- rbind(all_terms,wordlist2dataframe(other_hawk, "Hawkish Keyword", topic = "Other"))
+
+############################### DOVISH Keywords ############################
+policy_dove <- c("monetary easing", "monetary easing cycle", "monetary stimulus", "stimulus")
+all_terms<- rbind(all_terms,wordlist2dataframe(policy_dove, "Dovish Keyword", topic = "Policy"))
+
+growth_dove <- c("economic activity contraction", "economic contraction", "economic slack",
+                 "economic uncertainty",
+                 "gdp decline", "household saving", "household savings", "idleness",
+                 "precautionary saving", "precautionary savings",
+                 "recession", "saving", "savings",
+                 "slack", "spare capacity", "uncertainty about economic growth",
+                 "unemployed", "unemployment", "unemployment rate", "unemployment rates")
+all_terms<- rbind(all_terms,wordlist2dataframe(growth_dove, "Dovish Keyword", topic = "Growth"))
+
+prices_dove <- c("expected deflation", "expected disinflation", "deflation", "disinflation",
+                 "deflationary risk", "deflationary risks",
+                 "disinflationary risk", "disinflationary risks")
+all_terms<- rbind(all_terms,wordlist2dataframe(prices_dove, "Dovish Keyword", topic = "Prices"))
+
+finance_dove <- c("financial crisis", "financial instability", "financial uncertainty",
+                  "financial volatility", "market volatility")
+all_terms<- rbind(all_terms,wordlist2dataframe(finance_dove, "Dovish Keywords", topic = "Finance"))
+
+global_dove <- c("geopolitical risks", "import", "imports", "import growth", "imports growth","net imports")
+all_terms<- rbind(all_terms,wordlist2dataframe(global_dove, "Dovish Keyword", topic = "Global"))
+
+other_dove <- c("coronavirus", "covid", "covid19", "covid 19", "deficit",
+                "epidemic", "infections", "instability", "lockdown", "lockdowns",
+                "pandemic", "risk", "risks", "tax rates",
+                "uncertainty", "vat rates", "variance", "volatility")
+all_terms<- rbind(all_terms,wordlist2dataframe(other_dove, "Dovish Keyword", topic = "Other"))
+
+neutral_terms <- c("all of the above", "at least", "best practice", "best practices",
+                   "committee stresses that", "forward contracts", "greater transparency",
+                   "greater focus",
+                   "high frequency", "higher frequency", "high quality", "high yield",
+                   "increasing weight", "more detail", "more timely", "more or less",
+                   "rate of change", "rates of change")
+all_terms<- rbind(all_terms,wordlist2dataframe(neutral_terms, "Neutral Phrase"))
+
+# Initialize empty data frames for each type
+fourgrams <- data.frame(term = character(), category = character(), topic = character())
+trigrams <- data.frame(term = character(), category = character(), topic = character())
+bigrams <- data.frame(term = character(), category = character(), topic = character())
+unograms <- data.frame(term = character(), category = character(), topic = character())
+
+# Loop through each row in all_terms
+for (i in seq_len(nrow(all_terms))) {
+  # Extract term, category, and topic from each row
+  term <- all_terms$term[i]
+  category <- all_terms$category[i]
+  topic <- all_terms$topic[i]
+  # Count the number of words in the term
+  word_count <- str_count(term, "\\S+")
+  # Append the row to the appropriate data frame based on word count
+  if (word_count == 4) {
+    fourgrams <- rbind(fourgrams, data.frame(term = term, category = category, topic = topic))
+  } else if (word_count == 3) {
+    trigrams <- rbind(trigrams, data.frame(term = term, category = category, topic = topic))
+  } else if (word_count == 2) {
+    bigrams <- rbind(bigrams, data.frame(term = term, category = category, topic = topic))
+  } else if (word_count == 1) {
+    unograms <- rbind(unograms, data.frame(term = term, category = category, topic = topic))
+  }
+}
+# Replace the space with an underscore for all_terms
+all_terms<- all_terms%>%
+  mutate(term = str_replace_all(term, " ", "_"))
+  
+# Resulting data frames 
+write.csv(all_terms,file = "All terms.csv", row.names=FALSE)
+write.csv(fourgrams,file = "Fourgrams.csv", row.names=FALSE)
+write.csv(trigrams,file = "Trigrams.csv", row.names=FALSE)
+write.csv(bigrams,file = "Bigrams.csv", row.names=FALSE)
+write.csv(unograms,file = "Unograms.csv", row.names=FALSE)
                           
 
 
