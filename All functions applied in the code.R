@@ -190,3 +190,5 @@ urls3 <- urls3[nrow(urls3):1, ]
 Minutes <- rbind(urls,urls1,urls2,urls3)
 colnames(Minutes)<-c("year","link")
 write.xlsx(Minutes, file = "FOMC Minutes.xlsx")
+
+
