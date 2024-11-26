@@ -13,6 +13,8 @@ library(stringr)
 library(xml2)
 library(pdftools)
 
+######################################################## Gather links from FOMC decisions and minutes########################################################
+# Note: Links from ECB minutes and decisions were gathered manually and are provided in the Excel files ("ECB Decisions links" and "ECB Minutes links")
 ######################################################## Save links to FOMC decisions ########################################################
 ############################## Scrape FOMC Statements from 1994 to 2018  ##############################
 decisions <- c()
