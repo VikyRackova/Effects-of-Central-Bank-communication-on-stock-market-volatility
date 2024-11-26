@@ -108,6 +108,7 @@ extract_text_for_date <- function(link) {
   })
 }
 
+
 ### Function to convert list into data frame
 wordlist2dataframe <- function(wordlist, category, topic =""){
   # Get rid of duplicates and sort the list alphabetically
@@ -117,4 +118,82 @@ wordlist2dataframe <- function(wordlist, category, topic =""){
                                "category"=rep(category,length(wordlist)),
                                "topic"=rep(topic,length(wordlist)))
   return(wordlist_df)
+}
+
+
+
+
+############################################################# Functions ######################################################
+### Function to unify the date format 
+standardize_date <- function(date_string) {
+  # Case 1: Handle date ranges by extracting the later date
+  if (grepl("-", date_string)) {
+    if (grepl("\\d+-\\d+ [A-Za-z]+ \\d{4}", date_string)) {
+      # Format "1-2 June 2016" - extract only the later part (June 2, 2016)
+      date_string <- sub(".*-\\s*", "", date_string)
+    } else if (grepl("[A-Za-z]+ \\d+-[A-Za-z]+ \\d{1,2}, \\d{4}", date_string)) {
+      # Format "April 30-May 1, 2013" - extract only the later part (May 1, 2013)
+      date_string <- sub(".*-\\s*", "", date_string)
+    }
+  }
+  # Attempt to parse date with multiple formats
+  formatted_date <- as.Date(date_string, format = "%d %B %Y")
+  if (is.na(formatted_date)) {
+    formatted_date <- as.Date(date_string, format = "%B %d, %Y")
+  }
+  if (is.na(formatted_date)) {
+    formatted_date <- dmy(date_string, quiet = TRUE)
+  }
+  if (is.na(formatted_date)) {
+    formatted_date <- mdy(date_string, quiet = TRUE)
+  }
+  # Format to yyyy/mm/dd
+  formatted_date <- format(formatted_date, "%Y/%m/%d")
+  
+  return(formatted_date)
+}
+
+
+### Function to clean text to only lowercase words without punctuation
+clean_text <- function(text) {
+  # Convert to lowercase
+  text <- tolower(text)
+  # Remove all punctuation except words, numbers, and spaces
+  text <- gsub("[[:punct:]]", " ", text)
+  # Remove numbers
+  text <- gsub("[0-9]+", " ", text)
+  # Replace multiple spaces with a single space
+  text <- str_squish(text)
+    return(text)
+}
+
+
+## Function to split the data set into sentences 
+sentenceSplit <- function(text_df, extra_dividers = c(";", ":","--")) {
+  # Placeholder lists for storing all sentences and documents
+  all_sentences <- vector("list", nrow(text_df))
+  all_docs <- vector("list", nrow(text_df))
+  # Split each document into sentences
+  for (dd in seq_len(nrow(text_df))) {
+    rawtext <- text_df$Text[dd]
+    # Split sentence using boundaries
+    all_sentences[[dd]] <- unlist(strsplit(rawtext, "(?<=[.!?])\\s+", perl = TRUE))
+    # For any extra dividers specified, split up the sentences further
+    for (divider in extra_dividers) {
+      split_again <- unlist(str_split(all_sentences[[dd]], divider))
+      all_sentences[[dd]] <- split_again
+    }
+    # Repeat document date for each sentence
+    all_docs[[dd]] <- rep(text_df$Date[dd], length(all_sentences[[dd]]))
+  }
+  # Flatten the lists into vectors
+  docsVector <- unlist(all_docs)
+  sentencesVector <- str_squish(unlist(all_sentences))  # Remove extra spaces
+  # Check that the lengths of docsVector and sentencesVector match
+  stopifnot(length(docsVector) == length(sentencesVector))
+  # Create DataFrame and merge back in original information
+  sentence_df <- data.frame(Date = docsVector, sentence = sentencesVector)
+  # Calculate character length of each sentence
+  sentence_df$nchar <- nchar(sentence_df$sentence)
+  return(sentence_df)
 }
