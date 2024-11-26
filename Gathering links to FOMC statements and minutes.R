@@ -4,6 +4,11 @@ setwd("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files")
 library(rvest)
 library(dplyr)
 library(openxlsx)
+library(readxl)
+library(httr)
+library(stringr)
+library(xml2)
+library(pdftools)
 
 ######################################################## Save links to FOMC decisions ########################################################
 ############################## Scrape FOMC Statements from 1994 to 2018  ##############################
@@ -190,5 +195,41 @@ urls3 <- urls3[nrow(urls3):1, ]
 Minutes <- rbind(urls,urls1,urls2,urls3)
 colnames(Minutes)<-c("year","link")
 write.xlsx(Minutes, file = "FOMC Minutes.xlsx")
+
+
+######################################################## Extracting Text and date from the links ########################################################
+############################## ECB Accounts --> Minutes ##############################
+# Load the file with the links 
+Accounts_file <- "C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/ECB Minute links.xlsx"
+ECB_Minutes <- read_excel(Accounts_file)
+# Access each link in the data frame and extract text
+ECB_Minutes <- ECB_Minutes %>%
+  mutate(Text = sapply(link, extract_text_ECB)) 
+# Extract precise date
+date <- str_extract(ECB_Minutes$Text, "\\b(\\d{1,2}(?:-\\d{1,2})? [A-Za-z]+ \\d{4})\\b")
+date<- as.data.frame(date)
+# Create a data frame with the date and text
+Minutes_ECB <- cbind(date, ECB_Minutes$Text)
+colnames(Minutes_ECB)<- c("Date","Text")
+#### Create a file with the processed data
+write.csv(Minutes_ECB,file = "ECB Accounts.csv",row.names=FALSE)
+
+############################## ECB Decisions  ##############################
+# Load the file with the links 
+Decisions_file <- "C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/ECB Decision links.xlsx"
+ECB_decisions <- read_excel(Decisions_file)
+# Access each link in the data frame and extract text
+ECB_decisions <- ECB_decisions %>%
+  mutate(Text = sapply(link, extract_text_ECB)) 
+# Extract precise date
+Text <- sapply(ECB_decisions$link, extract_text_for_date)
+date_pattern <- "\\b(\\d{1,2}(?:-\\d{1,2})? [A-Za-z]+ \\d{4})|([A-Za-z]+ \\d{1,2}, \\d{4})\\b"
+dates <- as.data.frame(sapply(Text, function(text) str_extract(text, date_pattern)))
+#### Create a dataframe with the date and text
+Decisions_ECB <- cbind(dates, ECB_decisions$Text)
+colnames(Decisions_ECB)<- c("Date","Text")
+#### Create a file with the processed data
+write.csv(Decisions_ECB,file = "ECB Decisions.csv",row.names=FALSE)
+
 
 
