@@ -12,6 +12,12 @@ library(httr)
 library(stringr)
 library(xml2)
 library(pdftools)
+library(tidyverse)
+library(readr)
+library(tidytext)
+library(lubridate)
+library(MASS)
+library(tidyr)
 
 ######################################################## Gather links from FOMC decisions and minutes########################################################
 # Note: Links from ECB minutes and decisions were gathered manually and are provided in the Excel files ("ECB Decisions links" and "ECB Minutes links")
@@ -528,7 +534,7 @@ all_terms<- rbind(all_terms,wordlist2dataframe(neutral_terms, "Neutral Phrase"))
 fourgrams <- data.frame(term = character(), category = character(), topic = character())
 trigrams <- data.frame(term = character(), category = character(), topic = character())
 bigrams <- data.frame(term = character(), category = character(), topic = character())
-unograms <- data.frame(term = character(), category = character(), topic = character())
+monograms <- data.frame(term = character(), category = character(), topic = character())
 
 # Loop through each row in all_terms
 for (i in seq_len(nrow(all_terms))) {
@@ -546,19 +552,22 @@ for (i in seq_len(nrow(all_terms))) {
   } else if (word_count == 2) {
     bigrams <- rbind(bigrams, data.frame(term = term, category = category, topic = topic))
   } else if (word_count == 1) {
-    unograms <- rbind(unograms, data.frame(term = term, category = category, topic = topic))
+    monograms <- rbind(monograms, data.frame(term = term, category = category, topic = topic))
   }
 }
 # Replace the space with an underscore for all_terms
 all_terms<- all_terms%>%
   mutate(term = str_replace_all(term, " ", "_"))
-  
-# Resulting data frames 
+# Save the dictionary data sets
 write.csv(all_terms,file = "All terms.csv", row.names=FALSE)
 write.csv(fourgrams,file = "Fourgrams.csv", row.names=FALSE)
 write.csv(trigrams,file = "Trigrams.csv", row.names=FALSE)
 write.csv(bigrams,file = "Bigrams.csv", row.names=FALSE)
-write.csv(unograms,file = "Unograms.csv", row.names=FALSE)
-                          
+
+
+######################################################## Hawk-score calculation ########################################################
+          
+
+          
 
 
