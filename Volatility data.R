@@ -21,7 +21,7 @@ colnames(SP500)[-1] <- c("SP500.High", "SP500.Low")  # Rename columns to identif
 
 ### EU indices
 ### Volatility index - VSTOXX (not available at Yahoo finance, obtained from Factset)
-VSTOXX <-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Data sets/VSTOXX EUR Historical Data.csv")
+VSTOXX <-read.csv("VSTOXX EUR Historical Data.csv")
 ### Market index - STOXX
 getSymbols("^STOXX", src = "yahoo", from = start_date)
 STOXX <- data.frame(Date = index(STOXX), coredata(STOXX)[, c("STOXX.High", "STOXX.Low")])%>%
