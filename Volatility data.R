@@ -1,4 +1,9 @@
 setwd()
+source("Functions.R")
+library(readxl)
+library(quantmod)
+library(dplyr)
+
 ########################################################## GATHER VOLATILITY DATA FROM YAHOO FINANCE (OR OTHER SOURCES) ########################################################## 
 # Define a start date
 start_date <- as.Date("1994-01-01")
