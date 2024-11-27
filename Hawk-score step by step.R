@@ -1,6 +1,6 @@
 rm(list=ls())
 # Set your working directory
-setwd("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files")
+setwd()
 # Import all the functions
 source("Functions.R")
 # Required packages to download
