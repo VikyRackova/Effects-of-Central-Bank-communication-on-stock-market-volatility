@@ -700,3 +700,14 @@ write.csv(topics_ECBM_DUMMY, file = "topics_ECBM_DUMMY.csv",row.names = FALSE)
 write.csv(topics_FEDD_DUMMY, file = "topics_FEDD_DUMMY.csv",row.names = FALSE)
 write.csv(topics_FEDM_DUMMY, file = "topics_FEDM_DUMMY.csv",row.names = FALSE)
 
+################################ Generate Word count per document  ################################        
+WCPD_ECBD<- process_word_count(Clean_ECBD)
+WCPD_ECBM<- process_word_count(Clean_ECBM)
+WCPD_FEDD<- process_word_count(Clean_FEDD)
+WCPD_FEDM<- process_word_count(Clean_FEDM)
+
+#Save the results               
+write.csv(WCPD_ECBD, file = "WCPD_ECBD.csv",row.names = FALSE)
+write.csv(WCPD_ECBM, file = "WCPD_ECBM.csv",row.names = FALSE)
+write.csv(WCPD_FEDD, file = "WCPD_FEDD.csv",row.names = FALSE)
+write.csv(WCPD_FEDM, file = "WCPD_FEDM.csv",row.names = FALSE)
