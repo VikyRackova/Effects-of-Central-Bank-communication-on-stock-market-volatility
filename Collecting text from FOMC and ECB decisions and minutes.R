@@ -653,7 +653,7 @@ ECBM <- process_bigrams(ECBM, Bigrams, Bi_grams)
 FEDM <- process_bigrams(FEDM, Bigrams, Bi_grams)
 
           
-################################ Retain Date, sentence id, sentence and word count pre sentence ################################          
+################################ Retain Date, sentence id, sentence, and word count per sentence ################################          
 Clean_ECBD <- ECBD%>%
   mutate(word_count = str_count(merged_sentence, "\\S+"))# create word count per sentence
 Clean_FEDD <- FEDD%>%
@@ -670,9 +670,33 @@ Scores_FEDM <- calculate_scores(Clean_FEDM, All_terms)
 Scores_ECBD <- calculate_scores(Clean_ECBD, All_terms)
 Scores_ECBM <- calculate_scores(Clean_ECBM, All_terms)
 
+#Save the results
+write.csv(Scores_ECBD, file = "Scores_ECBD.csv",row.names = FALSE)
+write.csv(Scores_ECBM, file = "Scores_ECBM.csv",row.names = FALSE)
+write.csv(Scores_FEDD, file = "Scores_FEDD.csv",row.names = FALSE)
+write.csv(Scores_FEDM, file = "Scores_FEDM.csv",row.names = FALSE)
           
 ################################ Calculate a standardized document score as well as score per topic ################################          
 topic_score_ECBM<-standardized_score_and_topic(Scores_ECBM)
 topic_score_ECBD<-standardized_score_and_topic(Scores_ECBD)
 topic_score_FEDD<-standardized_score_and_topic(Scores_FEDD)
 topic_score_FEDM<-standardized_score_and_topic(Scores_FEDM)
+
+# Save the results      
+write.csv(topic_score_ECBM, file = "topic_score_ECBM.csv",row.names = FALSE)         
+write.csv(topic_score_ECBD, file = "topic_score_ECBD.csv",row.names = FALSE)   
+write.csv(topic_score_FEDD, file = "topic_score_FEDD.csv",row.names = FALSE)   
+write.csv(topic_score_FEDM, file = "topic_score_FEDM.csv",row.names = FALSE)   
+
+################################ Create Dummy variables of most commonly discussed topics per document ################################        
+topics_ECBD_DUMMY <- most_common_topics_dummy(Scores_ECBD)
+topics_ECBM_DUMMY <- most_common_topics_dummy(Scores_ECBM)
+topics_FEDD_DUMMY <- most_common_topics_dummy(Scores_FEDD)
+topics_FEDM_DUMMY <- most_common_topics_dummy(Scores_FEDM)
+
+#Save the results               
+write.csv(topics_ECBD_DUMMY, file = "topics_ECBD_DUMMY.csv",row.names = FALSE)
+write.csv(topics_ECBM_DUMMY, file = "topics_ECBM_DUMMY.csv",row.names = FALSE)
+write.csv(topics_FEDD_DUMMY, file = "topics_FEDD_DUMMY.csv",row.names = FALSE)
+write.csv(topics_FEDM_DUMMY, file = "topics_FEDM_DUMMY.csv",row.names = FALSE)
+
