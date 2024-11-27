@@ -287,7 +287,7 @@ high_modifiers <- c( "above", "accelerate", "accelerated", "accelerates", "accel
                      "exceeding", "exceeds", "excessive","expand", "expanded", "expanding", "expands",
                       "expansionary", "fast", "faster", "faster than estimated", "faster than expected",
                       "faster than usual","fastest","further", "further than estimated", 
-                     "further than expected", "further than usual","furthering", "gain", "gain", 
+                     "further than expected", "further than usual","furthering", "gain", "gain", "go up",
                      "gaining", "gained", "grew", "grow", "growing", "grown", "grows", "hawk", "hawkish", 
                      "high","higher", "higher than estimated", "higher than expected", "higher than usual",
                      "highest", "hike", "hikes", "hiking", "impulse", "impulsed", "impulses", "impulsing",
@@ -308,6 +308,7 @@ high_modifiers <- c( "above", "accelerate", "accelerated", "accelerates", "accel
                      "upturning", "upturns", "upward", "upwards", "upward risk", "upward risks",
                      "upward trend", "upward trends", "upwards risk", "upwards risks","upwards trend", 
                      "upwards trends","vigor", "vigorous", "widen", "widened", "widening", "widens", "wider")
+
 all_terms<- wordlist2dataframe(high_modifiers,"High modifier")
 
 positive_modifiers <- c( "accommodate", "accommodated", "accommodates", "accommodating","benign", "best",
@@ -322,7 +323,7 @@ positive_modifiers <- c( "accommodate", "accommodated", "accommodates", "accommo
                          "looser than expected", "looser than usual","mitigate", "mitigated", "mitigates", "mitigating", 
                          "optimistic", "outperform","outperformed", "outperforming", "outperforms", "positive","recover", 
                          "recovered", "recovering", "recovers","reinforce", "reinforced", "reinforces", "reinforcing",
-                         "restore", "restored", "restores", "restoring","satisfactory", "stabilise", "stabilised",
+                         "remain unchanged","restore", "restored", "restores", "restoring","satisfactory", "stabilise", "stabilised",
                          "stabilises", "stabilising", "stabilize", "stabilized","stabilizes", "stabilizing", "stable",
                          "stimulate", "stimulated", "stimulates", "stimulating","stimulative", "stimulatory", "steady", 
                          "successful")
@@ -378,28 +379,30 @@ negators <- c("anti", "aren t", "by no means",
               "halted", "halted the",
               "halting", "halting the",
               "halts", "halts the",
-              "nt", "not", "not a", "not an", "not the",
+              "nt", "not", "not a", "not an", "not the","not expected to",
               "not allow", "not allow a", "not allow an", "not allow the", "not be",
               "not permit", "not permit a", "not permit an", "not permit the",
               "prevent", "prevent a", "prevent an", "prevent the",
               "preventing", "preventing a", "preventing an", "preventing the",
               "prevents",  "prevents a", "prevents an", "prevents the",
-              "not permit a", "not permit an", "not permit the",
+              "not permit a", "not permit an", "not permit the","no reason to","no reason to expect",
               "not rule out", "not rule out a", "not rule out an", "not rule out the",
               "reverse", "reverse the", "reverse a", "reverse an",
               "reversed", "reversed the", "reversed a", "reversed an",
               "reverses", "reverses the", "reverses a", "reverses an",
               "reversing", "reversing the", "reversing a", "reversing an",
-              "reversal of", "reversal of the")
+              "reversal of", "reversal of the","unlikely to")
+
 all_terms<- rbind(all_terms,wordlist2dataframe(negators,"Negator"))
 
 ############################# HAWKISH keywords #############################
+
 policy_hawk <- c("bank rate", "board member", "board members", "central bank", "central banks",
                  "committee member",  "committee members", "core rates", "deposit rates",
-                 "euribor", "interbank interest rate",
+                 "deposit facility","euribor", "interbank interest rate",
                  "interbank rate", "interbank rates", "interest rate", "interest rates",
-                 "libor", "lombard rate",
-                 "marginal standing facility", "market rates", "monetary conditions",
+                 "libor", "lombard rate", "main refinancing operations",
+                 "marginal standing facility","marginal lending facility", "market rates", "monetary conditions",
                  "monetary policy", "monetary policy action", "monetary policy actions",
                  "monetary policy instrument", "monetary policy instruments",
                  "monetary policy stance", "monetary policy stances",
@@ -457,6 +460,7 @@ prices_hawk <- c("commodity price", "commodity prices", "consumer price", "consu
                  "wage", "wage growth", "wages", "wages growth")
 all_terms<- rbind(all_terms,wordlist2dataframe(prices_hawk, "Hawkish Keyword", topic = "Prices"))
 
+
 finance_hawk <- c("asset price", "asset prices",
                   "banks", "banking system",  "banking sector", "banking sector",
                   "capital flows", "credit", "credit growth", "commercial paper",
@@ -486,12 +490,13 @@ global_hawk <- c("advanced country", "advanced countries", "advanced economy", "
                  "world economic activity", "world economic growth",
                  "world economy", "world growth")
 all_terms<- rbind(all_terms,wordlist2dataframe(global_hawk, "Hawkish Keyword", topic = "Global"))
-          
+
 other_hawk <- c("confidence", "housing", "housing market", "sentiment", "surplus",
                 "vaccine", "vaccines", "vaccination", "vaccinations")
 all_terms<- rbind(all_terms,wordlist2dataframe(other_hawk, "Hawkish Keyword", topic = "Other"))
 
 ############################### DOVISH Keywords ############################
+
 policy_dove <- c("monetary easing", "monetary easing cycle", "monetary stimulus", "stimulus")
 all_terms<- rbind(all_terms,wordlist2dataframe(policy_dove, "Dovish Keyword", topic = "Policy"))
 
@@ -513,7 +518,8 @@ finance_dove <- c("financial crisis", "financial instability", "financial uncert
                   "financial volatility", "market volatility")
 all_terms<- rbind(all_terms,wordlist2dataframe(finance_dove, "Dovish Keywords", topic = "Finance"))
 
-global_dove <- c("geopolitical risks", "import", "imports", "import growth", "imports growth","net imports")
+global_dove <- c("geopolitical risks", "import", "imports", "import growth", "imports growth",
+                 "net imports")
 all_terms<- rbind(all_terms,wordlist2dataframe(global_dove, "Dovish Keyword", topic = "Global"))
 
 other_dove <- c("coronavirus", "covid", "covid19", "covid 19", "deficit",
@@ -529,7 +535,6 @@ neutral_terms <- c("all of the above", "at least", "best practice", "best practi
                    "increasing weight", "more detail", "more timely", "more or less",
                    "rate of change", "rates of change")
 all_terms<- rbind(all_terms,wordlist2dataframe(neutral_terms, "Neutral Phrase"))
-
 # Initialize empty data frames for each type
 fourgrams <- data.frame(term = character(), category = character(), topic = character())
 trigrams <- data.frame(term = character(), category = character(), topic = character())
@@ -542,8 +547,10 @@ for (i in seq_len(nrow(all_terms))) {
   term <- all_terms$term[i]
   category <- all_terms$category[i]
   topic <- all_terms$topic[i]
+  
   # Count the number of words in the term
   word_count <- str_count(term, "\\S+")
+  
   # Append the row to the appropriate data frame based on word count
   if (word_count == 4) {
     fourgrams <- rbind(fourgrams, data.frame(term = term, category = category, topic = topic))
@@ -555,15 +562,17 @@ for (i in seq_len(nrow(all_terms))) {
     monograms <- rbind(monograms, data.frame(term = term, category = category, topic = topic))
   }
 }
+
 # Replace the space with an underscore for all_terms
 all_terms<- all_terms%>%
   mutate(term = str_replace_all(term, " ", "_"))
-# Save the dictionary data sets
+  
+# Resulting data frames will be fourgrams, trigrams, bigrams, and unograms
+
 write.csv(all_terms,file = "All terms.csv", row.names=FALSE)
 write.csv(fourgrams,file = "Fourgrams.csv", row.names=FALSE)
 write.csv(trigrams,file = "Trigrams.csv", row.names=FALSE)
 write.csv(bigrams,file = "Bigrams.csv", row.names=FALSE)
-
 
 ######################################################## Hawk-score calculation ########################################################
 # Load all the text files and dictionary classifications
@@ -592,7 +601,7 @@ Decisions_FED <- Decisions_FED%>%
 Decisions_ECB <- Decisions_ECB%>%
   mutate(Date = sapply(Date, standardize_date))
 
-### Split the data into sentences and clean it 
+### Clean the data and split into sentences  
 Sentences_minutes_FED <- sentenceSplit(Minutes_FED)%>% # Split the text to sentences 
   mutate(Cleaned_Text = sapply(sentence, clean_text))%>% # clean the text with a function 
   group_by(Date) %>%
@@ -627,7 +636,6 @@ ECBM <- process_fourgrams(Sentences_minutes_ECB, Fourgrams, Four_grams)
 # FED
 FEDM <- process_fourgrams(Sentences_minutes_FED, Fourgrams, Four_grams)
 
-          
 ################################ Checking for Trigrams ################################          
 ##### Decisions
 ECBD <- process_trigrams(ECBD, Trigrams, Tri_grams)
@@ -639,7 +647,6 @@ ECBM <- process_trigrams(ECBM, Trigrams, Tri_grams)
 # FED
 FEDM <- process_trigrams(FEDM, Trigrams, Tri_grams)
 
-          
 ################################ Checking for Bigrams ################################
 ##### Decisions
 #ECB
@@ -676,18 +683,19 @@ write.csv(Scores_ECBM, file = "Scores_ECBM.csv",row.names = FALSE)
 write.csv(Scores_FEDD, file = "Scores_FEDD.csv",row.names = FALSE)
 write.csv(Scores_FEDM, file = "Scores_FEDM.csv",row.names = FALSE)
           
-################################ Calculate a standardized document score as well as score per topic ################################          
-topic_score_ECBM<-standardized_score_and_topic(Scores_ECBM)
-topic_score_ECBD<-standardized_score_and_topic(Scores_ECBD)
-topic_score_FEDD<-standardized_score_and_topic(Scores_FEDD)
-topic_score_FEDM<-standardized_score_and_topic(Scores_FEDM)
+############################################# Create total standardized scores and standardized scores per topic #################################
+Final_score_ECBM<-standardized_score_and_topic(Scores_ECBM)
+Final_score_ECBD<-standardized_score_and_topic(Scores_ECBD)
+Final_score_FEDD<-standardized_score_and_topic(Scores_FEDD)
+Final_score_FEDM<-standardized_score_and_topic(Scores_FEDM)
 
-# Save the results      
-write.csv(topic_score_ECBM, file = "topic_score_ECBM.csv",row.names = FALSE)         
-write.csv(topic_score_ECBD, file = "topic_score_ECBD.csv",row.names = FALSE)   
-write.csv(topic_score_FEDD, file = "topic_score_FEDD.csv",row.names = FALSE)   
-write.csv(topic_score_FEDM, file = "topic_score_FEDM.csv",row.names = FALSE)   
+# Save the results
+write.csv(Final_score_ECBM, file = "Final_score_ECBM.csv",row.names = FALSE)         
+write.csv(Final_score_ECBD, file = "Final_score_ECBD.csv",row.names = FALSE)   
+write.csv(Final_score_FEDD, file = "Final_score_FEDD.csv",row.names = FALSE)   
+write.csv(Final_score_FEDM, file = "Final_score_FEDM.csv",row.names = FALSE)   
 
+######################################################################################### CREATING TOPIC DUMMIES #########################################################################################
 ################################ Create Dummy variables of most commonly discussed topics per document ################################        
 topics_ECBD_DUMMY <- most_common_topics_dummy(Scores_ECBD)
 topics_ECBM_DUMMY <- most_common_topics_dummy(Scores_ECBM)
@@ -700,7 +708,7 @@ write.csv(topics_ECBM_DUMMY, file = "topics_ECBM_DUMMY.csv",row.names = FALSE)
 write.csv(topics_FEDD_DUMMY, file = "topics_FEDD_DUMMY.csv",row.names = FALSE)
 write.csv(topics_FEDM_DUMMY, file = "topics_FEDM_DUMMY.csv",row.names = FALSE)
 
-################################ Generate Word count per document  ################################        
+######################################################################################### Generate Word count per document  #########################################################################################        
 WCPD_ECBD<- process_word_count(Clean_ECBD)
 WCPD_ECBM<- process_word_count(Clean_ECBM)
 WCPD_FEDD<- process_word_count(Clean_FEDD)
@@ -711,3 +719,16 @@ write.csv(WCPD_ECBD, file = "WCPD_ECBD.csv",row.names = FALSE)
 write.csv(WCPD_ECBM, file = "WCPD_ECBM.csv",row.names = FALSE)
 write.csv(WCPD_FEDD, file = "WCPD_FEDD.csv",row.names = FALSE)
 write.csv(WCPD_FEDM, file = "WCPD_FEDM.csv",row.names = FALSE)
+
+######################################################################################### Create scores of sentiment and uncertainty from text #########################################################################################
+sentiment_score_ECBD <- sentiment(Decisions_ECB)
+sentiment_score_ECBM <- sentiment(Minutes_ECB)
+sentiment_score_FEDD <- sentiment(Decisions_FED)
+sentiment_score_FEDM <- sentiment(Minutes_FED)
+
+
+write.csv(sentiment_score_ECBD, file = "sentiment_score_ECBD.csv",row.names = FALSE)
+write.csv(sentiment_score_ECBM, file = "sentiment_score_ECBM.csv",row.names = FALSE)
+write.csv(sentiment_score_FEDD, file = "sentiment_score_FEDD.csv",row.names = FALSE)
+write.csv(sentiment_score_FEDM, file = "sentiment_score_FEDM.csv",row.names = FALSE)
+          
