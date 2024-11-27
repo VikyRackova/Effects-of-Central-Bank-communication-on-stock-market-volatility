@@ -40,7 +40,6 @@ STOXX <- STOXX %>%
   )
 
 VSTOXX <- VSTOXX %>%
-  rename(VSTOXX.Price = High, VSTOXX.Low = Low)%>%
   mutate(Percent_change.VSTOXX = 100*(log(VSTOXX.Price)-log(lag(VSTOXX.Price))))%>%
   dplyr::select(Date,Percent_change.VSTOXX)%>%
   rename(VSTOXX = Percent_change.VSTOXX) %>%
