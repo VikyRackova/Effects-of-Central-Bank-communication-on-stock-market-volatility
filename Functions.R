@@ -370,7 +370,6 @@ standardized_score_and_topic <- function(data){
       num_sentences = n_distinct(sentence_id),  # Count unique sentence IDs
       .groups = 'drop'
     )
-  
   # create a fraction each topic represents per sentence
   topic_fraction<- sentence%>% 
     left_join(sentence_count, by = "Date")%>%
@@ -382,13 +381,10 @@ standardized_score_and_topic <- function(data){
         score / sentence_score))%>%            # Perform the division otherwise
     mutate(topic_fraction = sum(topic_fraction_sentence)/num_sentences)%>%
     dplyr::select(Date,topic_keyword,topic_fraction)
-    
   topic_fraction <- unique(topic_fraction)
-  
   # Deduplicate sentence_scores
   unique_sentence_scores <- sentence  %>%
     distinct(Date, sentence_id, .keep_all = TRUE)  # Keep unique sentence IDs for each Date
-  
   # calculate a score per document and standardize it
   total_score <- unique_sentence_scores%>%
     left_join(sentence_count, by = "Date")%>%
@@ -397,7 +393,6 @@ standardized_score_and_topic <- function(data){
               .groups = 'drop'
     )%>%
     mutate(Standardized_score = ((total_document_score - mean(total_document_score))/sd(total_document_score)) )
-
   # summarise the results and create standardized scores per topic
   standardized_topic_scores <- topic_fraction%>%
     left_join(total_score, by = "Date")%>%
@@ -482,13 +477,10 @@ create_wordcloud_per_topic <- function(data, x) {
     # Filter data for the current topic
     topic_data <- summarized_data %>%
       filter(topic_keyword == topic)
-    
     # Replace underscores with spaces for better readability
     topic_data$word_keyword <- gsub("_", " ", topic_data$word_keyword)
-    
     # Adjust size of the plot
     par(plt = c(0.1, 0.8, 0.1, 0.8))  # Adjust the plot to fill more space
-    
     # Create the word cloud with larger text and increased spacing
     wordcloud(
       words = topic_data$word_keyword,
@@ -506,3 +498,14 @@ create_wordcloud_per_topic <- function(data, x) {
   }
 }
 
+
+### Function to create lagged observations
+create_lagged_columns <- function(data, column_name, max_lag) {
+  # Iterate over the range of lags
+  for (lag in 1:max_lag) {
+    # Create the lagged column
+    lagged_column_name <- paste0(column_name, "_T", lag)
+    data[[lagged_column_name]] <- dplyr::lag(data[[column_name]], n = lag)
+  }
+  return(data)
+}
