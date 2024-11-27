@@ -18,6 +18,9 @@ library(tidytext)
 library(lubridate)
 library(MASS)
 library(tidyr)
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
 
 ######################################################## Gather links from FOMC decisions and minutes########################################################
 # Note: Links from ECB minutes and decisions were gathered manually and are provided in the Excel files ("ECB Decisions links" and "ECB Minutes links")
