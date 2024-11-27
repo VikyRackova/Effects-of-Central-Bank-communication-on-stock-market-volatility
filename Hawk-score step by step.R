@@ -214,7 +214,7 @@ write.xlsx(Minutes, file = "FOMC Minutes links.xlsx")
 ######################################################## Extracting Text and date from the links ########################################################
 ############################## ECB Accounts --> Minutes ##############################
 # Load the file with the links 
-Accounts_file <- "C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/ECB Minute links.xlsx"
+Accounts_file <- "ECB Minute links.xlsx"
 ECB_Minutes <- read_excel(Accounts_file)
 # Access each link in the data frame and extract text
 ECB_Minutes <- ECB_Minutes %>%
@@ -230,7 +230,7 @@ write.csv(Minutes_ECB,file = "ECB Accounts.csv",row.names=FALSE)
 
 ############################## ECB Decisions  ##############################
 # Load the file with the links 
-Decisions_file <- "C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/ECB Decision links.xlsx"
+Decisions_file <- "ECB Decision links.xlsx"
 ECB_decisions <- read_excel(Decisions_file)
 # Access each link in the data frame and extract text
 ECB_decisions <- ECB_decisions %>%
@@ -247,7 +247,7 @@ write.csv(Decisions_ECB,file = "ECB Decisions.csv",row.names=FALSE)
 
 ############################## FED Minutes  ##############################
 # Load the file with the links 
-Minutes_file <- "C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/FOMC Minutes links.xlsx"
+Minutes_file <- "FOMC Minutes links.xlsx"
 FOMC_Minutes <- read_excel(Minutes_file)
 # Access each link in the data frame and extract text
 FOMC_Minutes <- FOMC_Minutes %>%
@@ -264,7 +264,7 @@ write.csv(Clean_FOMC_Minutes,file = "FOMC Minutes.csv",row.names=FALSE
           
 ############################## FED Statements --> Decisions  ##############################          
 # Load the file with the links 
-Statements_file <- "C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/FOMC Statements links.xlsx"
+Statements_file <- "FOMC Statements links.xlsx"
 FOMC_Statements <- read_excel(Statements_file)
 # Access each link in the data frame and extract text
 FOMC_Statements <- FOMC_Statements %>%
@@ -579,21 +579,21 @@ write.csv(bigrams,file = "Bigrams.csv", row.names=FALSE)
 
 ######################################################## Hawk-score calculation ########################################################
 # Load all the text files and dictionary classifications
-Minutes_FED<-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/FOMC Minutes.csv")
-Minutes_ECB<-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/ECB Accounts.csv")
-Decisions_FED<-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/FOMC Statements.csv")
-Decisions_ECB<- read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/ECB Decisions.csv")
-All_terms <- read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/All terms.csv")
-Fourgrams<- read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/Fourgrams.csv")
-Trigrams <-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/Trigrams.csv")
-Bigrams <-read.csv("C:/one drive/Počítač/UNI/Bachelors thesis/Cleaned files/Bigrams.csv")
+Minutes_FED<-read.csv("FOMC Minutes.csv")
+Minutes_ECB<-read.csv("ECB Accounts.csv")
+Decisions_FED<-read.csv("FOMC Statements.csv")
+Decisions_ECB<- read.csv("ECB Decisions.csv")
+All_terms <- read.csv("All terms.csv")
+Fourgrams<- read.csv("Fourgrams.csv")
+Trigrams <-read.csv("Trigrams.csv")
+Bigrams <-read.csv("Bigrams.csv")
 Four_grams <- Fourgrams %>%
   mutate(term = str_replace_all(term, " ", "_"))
 Tri_grams<- Trigrams %>%
   mutate(term = str_replace_all(term, " ", "_"))
 Bi_grams<- Bigrams %>%
   mutate(term = str_replace_all(term, " ", "_"))
-
+   
 ### Unify the date format
 Minutes_FED<- Minutes_FED%>%
   mutate(Date = sapply(Date, standardize_date))
