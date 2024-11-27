@@ -121,9 +121,6 @@ wordlist2dataframe <- function(wordlist, category, topic =""){
 }
 
 
-
-
-############################################################# Functions ######################################################
 ### Function to unify the date format 
 standardize_date <- function(date_string) {
   # Case 1: Handle date ranges by extracting the later date
@@ -149,7 +146,6 @@ standardize_date <- function(date_string) {
   }
   # Format to yyyy/mm/dd
   formatted_date <- format(formatted_date, "%Y/%m/%d")
-  
   return(formatted_date)
 }
 
@@ -199,7 +195,7 @@ sentenceSplit <- function(text_df, extra_dividers = c(";", ":","--")) {
 }
 
 
-### Function to process the Fourgrams
+### Function to process Fourgrams
 process_fourgrams <- function(data, fourgrams_terms, four_grams_terms) {
   data %>%
     unnest_tokens(fourgram, Cleaned_Text, token = "ngrams", n = 4) %>%
@@ -230,7 +226,7 @@ process_fourgrams <- function(data, fourgrams_terms, four_grams_terms) {
 }
 
 
-### Function to process the Trigrams
+### Function to process Trigrams
 process_trigrams <- function(data, trigrams_terms, tri_grams_terms) {
   data %>%
     unnest_tokens(trigram, merged_sentence, token = "ngrams", n = 3) %>%
@@ -259,7 +255,7 @@ process_trigrams <- function(data, trigrams_terms, tri_grams_terms) {
 }
 
 
-### Function to process the Bigrams
+### Function to process Bigrams
 process_bigrams <- function(data, bigrams_terms, bi_grams_terms) {
   data %>%
     unnest_tokens(bigram, merged_sentence, token = "ngrams", n = 2) %>%
@@ -287,8 +283,7 @@ process_bigrams <- function(data, bigrams_terms, bi_grams_terms) {
 }
 
 
-### Function that assigns value to word combinations found in the dictionary
-calculate_scores <- function(Clean_file, All_terms) {
+### Function that assigns a score to all modifier and keyword combinationcalculate_scores
   # Step 1: Process and clean tokens
   Term <- Clean_file %>%
     unnest_tokens(word, merged_sentence, token = "ngrams", n = 1) %>% # create individual words
@@ -297,7 +292,6 @@ calculate_scores <- function(Clean_file, All_terms) {
     mutate(word = if_else(word %in% All_terms$term, word, NA_character_)) %>%
     filter(!is.na(word)) %>%  # Remove rows with NA in the word column (words not in All_terms)
     left_join(All_terms %>% dplyr::select(term, category, topic), by = c("word" = "term"), relationship = "many-to-many")
-
   # Step 2: Identify keywords and modifiers
   keywords <- Term %>%
     filter(category %in% c("Hawkish Keyword", "Dovish Keyword"))
@@ -350,7 +344,7 @@ calculate_scores <- function(Clean_file, All_terms) {
       TRUE ~ 0  # Default case if no conditions match
     )) %>%
     
-    # Step 6: Reverse score if a negator is found directly before the modifier
+    # Step 5: Reverse score if a negator is found directly before the modifier
     mutate(score = if_else(negator_in_front, -score, score)) %>%
     
   # Return the final scored data frame
@@ -440,3 +434,75 @@ most_common_topics_dummy <- function(data) {
   # Return the updated data frame
   return(result)
 }
+
+
+### Function to retain word count per document from sentence word counts
+process_word_count <- function(data) {
+  data %>%
+    group_by(Date) %>%
+    mutate(Document_word_count = sum(word_count)) %>%
+    distinct(Date, .keep_all = TRUE) %>%
+    dplyr::select(Date, Document_word_count)
+}
+
+
+### Function to calculate sentiment and uncertainty score from text
+sentiment <- function(data) {
+  word_classification <- data %>%
+    mutate(Text = tolower(Text)) %>%  # Convert text to lowercase
+    unnest_tokens(word, Text) %>%
+    inner_join(get_sentiments("loughran"), by = "word", relationship = "many-to-many") %>%
+    group_by(Date, sentiment) %>%
+    summarize(count = n(), .groups = "drop") %>%
+    tidyr::pivot_wider(names_from = sentiment, values_from = count, values_fill = list(count = 0))
+  sentiment_score<- word_classification%>%
+    mutate(rowsum = positive + negative + uncertainty + constraining + litigious + superfluous)%>%
+    mutate(Sentiment_score = ((positive-negative)/rowsum))%>%
+    mutate(Standardized_sentiment_score = (Sentiment_score - mean(Sentiment_score)/sd(Sentiment_score)))%>%
+    mutate(Uncertainty_score = (uncertainty/rowsum))%>%
+    mutate(Standardized_uncertainty_score = (Uncertainty_score - mean(Uncertainty_score)/sd(Uncertainty_score)))%>%
+    dplyr::select(Date,Standardized_sentiment_score, Standardized_uncertainty_score)
+  
+  return(sentiment_score)
+}
+
+
+### Function to create word clouds of frequent words 
+create_wordcloud_per_topic <- function(data, x) {
+  # Summarize data to get the frequency of each word per topic
+  summarized_data <- data %>%
+    group_by(topic_keyword, word_keyword) %>%
+    summarize(frequency = n(), .groups = "drop")
+  # Get the unique topics
+  unique_topics <- unique(summarized_data$topic_keyword)
+  # Define shades of blue for the word cloud, skipping the lightest blue
+  blue_shades <- brewer.pal(9, "Blues")[4:9]  # Start from a slightly darker shade
+  # Loop through each topic and create a word cloud
+  for (topic in unique_topics) {
+    # Filter data for the current topic
+    topic_data <- summarized_data %>%
+      filter(topic_keyword == topic)
+    
+    # Replace underscores with spaces for better readability
+    topic_data$word_keyword <- gsub("_", " ", topic_data$word_keyword)
+    
+    # Adjust size of the plot
+    par(plt = c(0.1, 0.8, 0.1, 0.8))  # Adjust the plot to fill more space
+    
+    # Create the word cloud with larger text and increased spacing
+    wordcloud(
+      words = topic_data$word_keyword,
+      freq = topic_data$frequency,
+      min.freq = 1,
+      scale = c(2, 1),  # Increase the scale for larger text
+      colors = blue_shades,  # Use darker shades of blue
+      random.order = FALSE,  # Ensure words are not randomly placed
+      rot.per = 0,           # Make all words horizontal
+      max.words = Inf,       # Allow as many words as needed
+      random.color = FALSE   # Ensure consistent colors
+    )
+    # Add a title to the plot based on the topic
+    title(main = paste(x, topic), line = 0, cex.main = 1.2)  # Adjust title size and position
+  }
+}
+
