@@ -415,3 +415,28 @@ standardized_score_and_topic <- function(data){
       values_fill = 0 ) # Fill missing values with 0
   return(standardized_topic_scores)
 }
+
+
+### Function to assing the most commonly discussed topic per document, dummy variable creation
+most_common_topics_dummy <- function(data) {
+  # Step 1: Group by Date and topic_keyword, and summarize the count
+  summarized_data <- data %>%
+    group_by(Date, topic_keyword) %>%
+    summarize(count = n(), .groups = 'drop')
+  
+  # Step 2: Filter for the most common topic per Date
+  most_common <- summarized_data %>%
+    group_by(Date) %>%
+    filter(count == max(count)) %>%
+    distinct(Date, topic_keyword, count)
+  
+  # Step 3: Create dummy variables for `topic_keyword`
+  most_common$topic_keyword <- as.factor(most_common$topic_keyword)
+  topic_dummies <- model.matrix(~ topic_keyword - 1, data = most_common)
+  
+  # Step 4: Add the dummy variables back to the original data frame
+  result <- cbind(most_common, as.data.frame(topic_dummies))
+  
+  # Return the updated data frame
+  return(result)
+}
