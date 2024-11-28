@@ -83,132 +83,126 @@ write.xlsx(Statements, file = "FOMC Statements links.xlsx")
 
 ####################################################### Save links to FOMC minutes #######################################################
 # Note: accessing the links for the minutes needs to be divided into several periods because of the difference in formatting
-############################## Scrape FOMC Minutes from 1994 to 2006 ##############################
-minutes <- c()
-years1 <- c()
-#  Gather pages from 1994 until 2006
-for (year in 1994:2007) {
-  # URL for each year
-  page_link1 <- paste0("https://www.federalreserve.gov/monetarypolicy/fomchistorical", year, ".htm")
-  # Read the HTML content 
-  page1 <- read_html(page_link1)
-  # Select only links from "Meetings"
-  headings <- page1 %>%
-    html_nodes(xpath = "//h5 | //a")  # Capture both headings and links
-  current_heading <- NA  # Initialize heading variable
-  # Loop through Headings 
-  for (node in headings) {
-    if (html_name(node) == "h5") {
-      current_heading <- html_text(node, trim = TRUE)  # Extract the heading text
-    } else if (html_name(node) == "a") {  # If it's a link and we are in the "Meeting" section
-      if (grepl("Meeting", current_heading, ignore.case = TRUE)) {
-        link_text <- html_text(node, trim = TRUE)
-        url <- html_attr(node, "href")
-        # Filter for links where the link text contains exactly "Statement"
-        if (grepl("^Minutes$", link_text, ignore.case = TRUE)) {
-          minutes <- c(minutes, url)
-          years1 <- c(years1, year)  # Append the current year directly
-        }
-      }
+# Base URL
+base_url <- "https://www.federalreserve.gov"
+
+# Initialize lists for different periods
+periods <- list()
+
+############################################################
+# Period 1994–2006
+############################################################
+minutes_1994_2006 <- c()
+dates_1994_2006 <- c()
+
+for (year in 1994:2006) {
+  page_link <- paste0(base_url, "/monetarypolicy/fomchistorical", year, ".htm")
+  page <- tryCatch(read_html(page_link), error = function(e) NULL)
+  if (is.null(page)) next
+  
+  nodes <- page %>% html_nodes(xpath = "//p[a[contains(text(), 'Minutes')]]")
+  for (node in nodes) {
+    link <- node %>% html_node("a") %>% html_attr("href")
+    release_date <- node %>% html_text(trim = TRUE) %>% str_extract("[A-Za-z]+ \\d{1,2}, \\d{4}")
+    if (!is.null(link) && !is.na(release_date)) {
+      minutes_1994_2006 <- c(minutes_1994_2006, paste0(base_url, link))
+      dates_1994_2006 <- c(dates_1994_2006, release_date)
     }
   }
 }
-# Clean up the links (ensure full URLs)
-base_url <- "https://www.federalreserve.gov"
-minutes <- ifelse(grepl("^http", minutes), minutes, paste0(base_url, minutes))
-urls <- data.frame(year = years1, url = minutes, stringsAsFactors = FALSE)
+urls_1994_2006 <- data.frame(Date = dates_1994_2006, Link = minutes_1994_2006, stringsAsFactors = FALSE)
+periods[["1994–2006"]] <- urls_1994_2006
 
-############################## Scrape FOMC Minutes from 2007 to 2010 ##############################
-minutes1 <- c()
-years2 <- c()
-#  Gather pages from 2007 until 2010
+############################################################
+# Period 2007–2010
+############################################################
+minutes_2007_2010 <- c()
+dates_2007_2010 <- c()
+
 for (year in 2007:2010) {
-  # URL for each year
-  page_link1 <- paste0("https://www.federalreserve.gov/monetarypolicy/fomchistorical", year, ".htm")
-  # Read the HTML content 
-  page1 <- read_html(page_link1)
-  # Select only links from "Meetings"
-  headings <- page1 %>%
-    html_nodes(xpath = "//h5 | //a")  # Capture both headings and links
-  current_heading <- NA  # Initialize heading variable
-  # Loop through Headings 
-  for (node in headings) {
-    if (html_name(node) == "h5") {
-      current_heading <- html_text(node, trim = TRUE)  # Extract the heading text
-    } else if (html_name(node) == "a") {  # If it's a link and we are in the "Meeting" section
-      if (grepl("Meeting", current_heading, ignore.case = TRUE)) {
-        link_text <- html_text(node, trim = TRUE)
-        url <- html_attr(node, "href")
-        # Ensure url is not NULL or empty
-        if (!is.null(url) && url != "" && grepl("/monetarypolicy/fomc", url)) {
-          minutes1 <- c(minutes1, url)
-          years2 <- c(years2, year)  # Append the current year directly
-        }
-      }
+  page_link <- paste0(base_url, "/monetarypolicy/fomchistorical", year, ".htm")
+  page <- tryCatch(read_html(page_link), error = function(e) NULL)
+  if (is.null(page)) next
+  
+  nodes <- page %>% html_nodes(xpath = "//p[a[contains(text(), 'Minutes') or contains(@href, 'minutes')]]")
+  for (node in nodes) {
+    link <- node %>% html_node("a") %>% html_attr("href")
+    release_date <- node %>% html_text(trim = TRUE) %>% str_extract("[A-Za-z]+ \\d{1,2}, \\d{4}")
+    if (!is.null(link) && !is.na(release_date)) {
+      minutes_2007_2010 <- c(minutes_2007_2010, paste0(base_url, link))
+      dates_2007_2010 <- c(dates_2007_2010, release_date)
     }
   }
-} 
-# Clean up the links (ensure full URLs)
-base_url <- "https://www.federalreserve.gov"
-minutes1 <- ifelse(grepl("^http", minutes1), minutes1, paste0(base_url, minutes1))
-urls1 <- data.frame(year = years2, url = minutes1, stringsAsFactors = FALSE)
+}
+urls_2007_2010 <- data.frame(Date = dates_2007_2010, Link = minutes_2007_2010, stringsAsFactors = FALSE)
+periods[["2007–2010"]] <- urls_2007_2010
 
-############################## Scrape FOMC Minutes from 2011 to 2018 ##############################
-minutes2 <- c()
-years3 <- c()
-#  Gather pages from 2011 until 2018
+############################################################
+# Period 2011–2018
+############################################################
+minutes_2011_2018 <- c()
+dates_2011_2018 <- c()
+
 for (year in 2011:2018) {
-  # URL for each year
-  page_link1 <- paste0("https://www.federalreserve.gov/monetarypolicy/fomchistorical", year, ".htm")
-  # Read the HTML content 
-  page1 <- read_html(page_link1)
-  # Select only links from "Meetings"
-  headings <- page1 %>%
-    html_nodes(xpath = "//h5 | //a")  # Capture both headings and links
-  current_heading <- NA  # Initialize heading variable
-  # Loop through Headings 
-  for (node in headings) {
-    if (html_name(node) == "h5") {
-      current_heading <- html_text(node, trim = TRUE)  # Extract the heading text
-    } else if (html_name(node) == "a") {  # If it's a link and we are in the "Meeting" section
-      if (grepl("Meeting", current_heading, ignore.case = TRUE)) {
-        link_text <- html_text(node, trim = TRUE)
-        url <- html_attr(node, "href")
-        # Ensure url is not NULL or empty
-        if (!is.null(url) && url != "" && grepl("/monetarypolicy/fomcminutes", url)) {
-          minutes2 <- c(minutes2, url)
-          years3 <- c(years3, year)  # Append the current year directly
-        }
-      }
+  page_link <- paste0(base_url, "/monetarypolicy/fomchistorical", year, ".htm")
+  page <- tryCatch(read_html(page_link), error = function(e) NULL)
+  if (is.null(page)) next
+  
+  nodes <- page %>% html_nodes(xpath = "//p[a[contains(text(), 'Minutes') or contains(@href, 'minutes')]]")
+  for (node in nodes) {
+    link <- node %>% html_node("a") %>% html_attr("href")
+    release_date <- node %>% html_text(trim = TRUE) %>% str_extract("[A-Za-z]+ \\d{1,2}, \\d{4}")
+    if (!is.null(link) && !is.na(release_date)) {
+      minutes_2011_2018 <- c(minutes_2011_2018, paste0(base_url, link))
+      dates_2011_2018 <- c(dates_2011_2018, release_date)
     }
   }
-} 
-# Clean up the links (ensure full URLs)
-base_url <- "https://www.federalreserve.gov"
-minutes2 <- ifelse(grepl("^http", minutes2), minutes2, paste0(base_url, minutes2))
-urls2 <- data.frame(year = years3, url = minutes2, stringsAsFactors = FALSE)
+}
+urls_2011_2018 <- data.frame(Date = dates_2011_2018, Link = minutes_2011_2018, stringsAsFactors = FALSE)
+periods[["2011–2018"]] <- urls_2011_2018
 
-############################## Scrape FOMC Minutes from 2019 to 2024 ##############################
-page_link1 <- paste0("https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm")
-# Read the HTML content of the specified page
-page <- read_html(page_link1)
-# Find all "statement" links on that page
-minutes_links <- page %>%
+############################################################
+# Period 2019–2024
+############################################################
+# Fetch the 2019–2024 calendar page
+calendar_page <- read_html(paste0(base_url, "/monetarypolicy/fomccalendars.htm"))
+
+# Extract links
+minutes_links <- calendar_page %>%
   html_nodes("a") %>%
   html_attr("href") %>%
-  grep("/monetarypolicy/fomcminutes", ., value = TRUE)  # Filter for the specific link pattern
-# Clean up the links (ensure full URLs)
-base_url <- "https://www.federalreserve.gov"
-minutes_links <- ifelse(grepl("^http", minutes_links), minutes_links, paste0(base_url, minutes_links))
-# Save the links in a data frame and add the extracted year as a separate column
-Years <- sub(".*/fomcminutes([0-9]{4}).*", "\\1", minutes_links)
-urls3<- data.frame(year = Years, url = minutes_links, stringsAsFactors = FALSE)
-urls3 <- urls3[nrow(urls3):1, ]
+  grep("/monetarypolicy/fomcminutes", ., value = TRUE) %>%
+  {ifelse(grepl("^http", .), ., paste0(base_url, .))}
 
-## Merge all the periods and create an excel file 
-Minutes <- rbind(urls,urls1,urls2,urls3)
-colnames(Minutes)<-c("year","link")
-write.xlsx(Minutes, file = "FOMC Minutes links.xlsx")
+# Extract release dates
+release_nodes <- calendar_page %>% html_nodes(xpath = "//div[contains(@class, 'fomc-meeting__minutes')]")
+release_dates <- release_nodes %>%
+  html_text(trim = TRUE) %>%
+  str_extract("\\(Released [A-Za-z]+ \\d{1,2}, \\d{4}\\)") %>%
+  str_remove_all("\\(Released |\\)") %>%
+  na.omit()
+
+# Combine into a data frame
+if (length(minutes_links) == length(release_dates)) {
+  urls_2019_2024 <- data.frame(Link = minutes_links, Date = release_dates, stringsAsFactors = FALSE)
+} else {
+  urls_2019_2024 <- data.frame(
+    Link = minutes_links,
+    Date = c(release_dates, rep(NA, length(minutes_links) - length(release_dates))),
+    stringsAsFactors = FALSE
+  )
+}
+periods[["2019–2024"]] <- urls_2019_2024
+
+############################################################
+# Merge All Periods into One Dataset
+############################################################
+Minutes_FED <- bind_rows(periods)
+
+# Print the final data frame
+print(Minutes_FED)
+colnames(Minutes_FED)<-c("Date","link")
+write.xlsx(Minutes_FED, file = "FOMC Minutes links.xlsx")
 
 
 ######################################################################################### EXTRACT TEXT AND DATE FROM LINKS #########################################################################################
@@ -218,9 +212,6 @@ ECB_Minutes <- read_excel("ECB Minute links.xlsx")
 # Access each link in the data frame and extract text
 ECB_Minutes <- ECB_Minutes %>%
   mutate(Text = sapply(link, extract_text_ECB)) 
-# Extract precise date
-date <- str_extract(ECB_Minutes$Text, "\\b(\\d{1,2}(?:-\\d{1,2})? [A-Za-z]+ \\d{4})\\b")
-date<- as.data.frame(date)
 # Create a data frame with the date and text
 Minutes_ECB <- cbind(date, ECB_Minutes$Text)
 colnames(Minutes_ECB)<- c("Date","Text")
@@ -249,12 +240,9 @@ FOMC_Minutes <- read_excel("FOMC Minutes links.xlsx")
 # Access each link in the data frame and extract text
 FOMC_Minutes <- FOMC_Minutes %>%
   mutate(Text = sapply(link, extract_text_FED_minutes)) 
-# Extract precise date
-date <- str_extract(FOMC_Minutes$Text, "([A-Za-z]+ \\d{1,2}(-[A-Za-z]+ \\d{1,2})?, \\d{4})|([A-Za-z]+ \\d{1,2}, \\d{4})") 
-date<- as.data.frame(date)
 # Clean the file                               
 cleaned_files <- (cleaning_FED(FOMC_Minutes))
-Clean_FOMC_Minutes <- cbind(date, cleaned_files)
+Clean_FOMC_Minutes <- cbind(FOMC_Minutes$Date, cleaned_files)
 colnames(Clean_FOMC_Minutes)<- c("Date","Text")
 write.csv(Clean_FOMC_Minutes,file = "FOMC Minutes.csv",row.names=FALSE
 
