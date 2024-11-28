@@ -213,9 +213,8 @@ write.xlsx(Minutes, file = "FOMC Minutes links.xlsx")
 
 ######################################################## Extracting Text and date from the links ########################################################
 ############################## ECB Accounts --> Minutes ##############################
-# Load the file with the links 
-Accounts_file <- "ECB Minute links.xlsx"
-ECB_Minutes <- read_excel(Accounts_file)
+# Load the file with the links
+ECB_Minutes <- read_excel("ECB Minute links.xlsx")
 # Access each link in the data frame and extract text
 ECB_Minutes <- ECB_Minutes %>%
   mutate(Text = sapply(link, extract_text_ECB)) 
@@ -230,8 +229,7 @@ write.csv(Minutes_ECB,file = "ECB Accounts.csv",row.names=FALSE)
 
 ############################## ECB Decisions  ##############################
 # Load the file with the links 
-Decisions_file <- "ECB Decision links.xlsx"
-ECB_decisions <- read_excel(Decisions_file)
+ECB_decisions <- read_excel("ECB Decision links.xlsx")
 # Access each link in the data frame and extract text
 ECB_decisions <- ECB_decisions %>%
   mutate(Text = sapply(link, extract_text_ECB)) 
@@ -247,8 +245,7 @@ write.csv(Decisions_ECB,file = "ECB Decisions.csv",row.names=FALSE)
 
 ############################## FED Minutes  ##############################
 # Load the file with the links 
-Minutes_file <- "FOMC Minutes links.xlsx"
-FOMC_Minutes <- read_excel(Minutes_file)
+FOMC_Minutes <- read_excel("FOMC Minutes links.xlsx")
 # Access each link in the data frame and extract text
 FOMC_Minutes <- FOMC_Minutes %>%
   mutate(Text = sapply(link, extract_text_FED_minutes)) 
@@ -264,8 +261,7 @@ write.csv(Clean_FOMC_Minutes,file = "FOMC Minutes.csv",row.names=FALSE
           
 ############################## FED Statements --> Decisions  ##############################          
 # Load the file with the links 
-Statements_file <- "FOMC Statements links.xlsx"
-FOMC_Statements <- read_excel(Statements_file)
+FOMC_Statements <- read_excel("FOMC Statements links.xlsx")
 # Access each link in the data frame and extract text
 FOMC_Statements <- FOMC_Statements %>%
   mutate(Text = sapply(link, extract_text_FED_decisions)) 
