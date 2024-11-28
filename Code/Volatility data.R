@@ -28,7 +28,7 @@ STOXX <- data.frame(Date = index(STOXX), coredata(STOXX)[, c("STOXX.High", "STOX
   mutate(Date = sapply(Date, standardize_date))
 colnames(STOXX)[-1] <- c("STOXX.High", "STOXX.Low")  # Rename columns to identify VIX data
 
-########################################################## Calculate percentage change in volatility and store its lags ########################################################## 
+########################################################## CALCULATE PERCENTAGE CHANGE IN VOLATILITY AND STORE ITS LAGS ########################################################## 
 STOXX <- STOXX %>%
   mutate(Percent_change.STOXX = 100*(log(STOXX.High)-log(STOXX.Low)))%>%
   dplyr::select(Date,Percent_change.STOXX)%>%
