@@ -133,19 +133,24 @@ standardize_date <- function(date_string) {
       date_string <- sub(".*-\\s*", "", date_string)
     }
   }
-  # Attempt to parse date with multiple formats
-  formatted_date <- as.Date(date_string, format = "%d %B %Y")
-  if (is.na(formatted_date)) {
-    formatted_date <- as.Date(date_string, format = "%B %d, %Y")
+  # Case 2: Handle input already in "YYYY-MM-DD" format
+  if (grepl("^\\d{4}-\\d{2}-\\d{2}$", date_string)) {
+    formatted_date <- as.Date(date_string, format = "%Y-%m-%d")
+  } else {
+    # Attempt to parse date with multiple formats
+    formatted_date <- as.Date(date_string, format = "%d %B %Y")
+    if (is.na(formatted_date)) {
+      formatted_date <- as.Date(date_string, format = "%B %d, %Y")
+    }
+    if (is.na(formatted_date)) {
+      formatted_date <- dmy(date_string, quiet = TRUE)
+    }
+    if (is.na(formatted_date)) {
+      formatted_date <- mdy(date_string, quiet = TRUE)
+    }
   }
-  if (is.na(formatted_date)) {
-    formatted_date <- dmy(date_string, quiet = TRUE)
-  }
-  if (is.na(formatted_date)) {
-    formatted_date <- mdy(date_string, quiet = TRUE)
-  }
-  # Format to yyyy/mm/dd
-  formatted_date <- format(formatted_date, "%Y/%m/%d")
+  # Format to yyyy-mm-dd
+  formatted_date <- format(formatted_date, "%Y-%m-%d")
   return(formatted_date)
 }
 
