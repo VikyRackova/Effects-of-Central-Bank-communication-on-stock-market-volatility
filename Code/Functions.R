@@ -1,5 +1,8 @@
 ########################################### All functions used in the analysis ###########################################
-######################## Function to extract text from URL for ECB links (excluding navigation and links)
+
+############################################################
+# Function to extract text from URL for ECB links (excluding navigation and links)
+############################################################
 extract_text_ECB <- function(link) {
   # Read the webpage content
   page <- read_html(link)
@@ -20,7 +23,9 @@ extract_text_ECB <- function(link) {
 }
 
 
-######################## Function to extract text from URL for FED minutes links (excluding navigation and links)
+############################################################
+# Function to extract text from URL for FED minutes links (excluding navigation and links)
+############################################################
 extract_text_FED_minutes <- function(link) {
   # Read the webpage content
   page <- read_html(link)
@@ -41,7 +46,9 @@ extract_text_FED_minutes <- function(link) {
 }
 
 
-######################## Function to clean FED text
+############################################################
+# Function to clean FED text
+############################################################
 cleaning_FED <- function(data) {
   # Create an empty list to store the cleaned text
   cleaned_files <- vector("list", length = nrow(data))
@@ -65,7 +72,9 @@ cleaning_FED <- function(data) {
 }
 
 
-######################## Function to extract text from both PDF and HTML URLs
+############################################################
+# Function to extract text from both PDF and HTML URLs
+############################################################
 extract_text_FED_decisions <- function(link) {
   # Check if the URL is a PDF
   if (grepl("\\.pdf$", link, ignore.case = TRUE)) {
@@ -93,7 +102,9 @@ extract_text_FED_decisions <- function(link) {
 }
 
 
-### Function to extract date from text of a URL
+############################################################
+# Function to extract date from text of a URL
+############################################################
 extract_text_for_date <- function(link) {
   tryCatch({
     page <- read_html(link)
@@ -109,7 +120,9 @@ extract_text_for_date <- function(link) {
 }
 
 
-### Function to convert list into data frame
+############################################################
+# Function to convert list into data frame
+############################################################
 wordlist2dataframe <- function(wordlist, category, topic =""){
   # Get rid of duplicates and sort the list alphabetically
   wordlist <- sort(unique(wordlist))
@@ -121,7 +134,9 @@ wordlist2dataframe <- function(wordlist, category, topic =""){
 }
 
 
-### Function to unify the date format 
+############################################################
+# Function to unify the date format 
+############################################################
 standardize_date <- function(date_string) {
   # Case 1: Handle date ranges by extracting the later date
   if (grepl("-", date_string)) {
@@ -155,7 +170,9 @@ standardize_date <- function(date_string) {
 }
 
 
-### Function to clean text to only lowercase words without punctuation
+############################################################
+# Function to clean text to only lowercase words without punctuation
+############################################################
 clean_text <- function(text) {
   # Convert to lowercase
   text <- tolower(text)
@@ -169,7 +186,9 @@ clean_text <- function(text) {
 }
 
 
-## Function to split the data set into sentences 
+############################################################
+# Function to split the data set into sentences 
+############################################################
 sentenceSplit <- function(text_df, extra_dividers = c(";", ":","--")) {
   # Placeholder lists for storing all sentences and documents
   all_sentences <- vector("list", nrow(text_df))
@@ -200,7 +219,9 @@ sentenceSplit <- function(text_df, extra_dividers = c(";", ":","--")) {
 }
 
 
-### Function to process Fourgrams
+############################################################
+# Function to process Fourgrams
+############################################################
 process_fourgrams <- function(data, fourgrams_terms, four_grams_terms) {
   data %>%
     unnest_tokens(fourgram, Cleaned_Text, token = "ngrams", n = 4) %>%
@@ -231,7 +252,9 @@ process_fourgrams <- function(data, fourgrams_terms, four_grams_terms) {
 }
 
 
-### Function to process Trigrams
+############################################################
+# Function to process Trigrams
+############################################################
 process_trigrams <- function(data, trigrams_terms, tri_grams_terms) {
   data %>%
     unnest_tokens(trigram, merged_sentence, token = "ngrams", n = 3) %>%
@@ -260,7 +283,9 @@ process_trigrams <- function(data, trigrams_terms, tri_grams_terms) {
 }
 
 
-### Function to process Bigrams
+############################################################
+# Function to process Bigrams
+############################################################
 process_bigrams <- function(data, bigrams_terms, bi_grams_terms) {
   data %>%
     unnest_tokens(bigram, merged_sentence, token = "ngrams", n = 2) %>%
@@ -288,7 +313,9 @@ process_bigrams <- function(data, bigrams_terms, bi_grams_terms) {
 }
 
 
-### Function that assigns a score to all modifier and keyword combinationcalculate_scores
+############################################################
+# Function that assigns a score to all modifier and keyword combination
+############################################################
 calculate_scores <- function(Clean_file, All_terms) {
   # Step 1: Process and clean tokens
   Term <- Clean_file %>%
@@ -360,7 +387,9 @@ calculate_scores <- function(Clean_file, All_terms) {
   return(Score)
 }
 
-### Function to calculate a score per document (not standardized and not per topic)
+############################################################
+# Function to calculate a score per document (not standardized and not per topic)
+############################################################
 calculate_final_score <- function(data) {
   sentence_scores <- data %>%
     group_by(Date, sentence_id) %>%
@@ -388,7 +417,9 @@ calculate_final_score <- function(data) {
 }
 
 
-### Function to calculate a standardized score per document and per topic
+############################################################
+# Function to calculate a standardized score per document and per topic
+############################################################
 standardized_score_and_topic <- function(data) {
   # Step 1: Calculate sentence-level scores
   calculate_sentence_scores <- function(data) {
@@ -403,7 +434,6 @@ standardized_score_and_topic <- function(data) {
       mutate(sentence_score = sum(score, na.rm = TRUE)) %>%  # Total score per sentence
       ungroup()
   }
-  
   # Step 2: Count sentences per document
   count_sentences <- function(data) {
     data %>%
@@ -413,7 +443,6 @@ standardized_score_and_topic <- function(data) {
         .groups = 'drop'
       )
   }
-  
   # Step 3: Calculate topic fractions
   calculate_topic_fractions <- function(sentence_data, sentence_count) {
     sentence_data %>%
@@ -435,7 +464,6 @@ standardized_score_and_topic <- function(data) {
       dplyr::select(Date, topic_keyword, topic_fraction) %>%
       distinct()
   }
-  
   # Step 4: Calculate document scores
   calculate_document_scores <- function(sentence_data, sentence_count) {
     sentence_data %>%
@@ -448,7 +476,6 @@ standardized_score_and_topic <- function(data) {
       ) %>%
       mutate(Standardized_score = (total_document_score - mean(total_document_score)) / sd(total_document_score))
   }
-  
   # Step 5: Calculate standardized topic scores
   calculate_topic_scores <- function(topic_fraction, document_score) {
     topic_fraction %>%
@@ -461,7 +488,6 @@ standardized_score_and_topic <- function(data) {
         values_fill = 0  # Fill missing values with 0
       )
   }
-  
   # Main process
   sentence_scores <- calculate_sentence_scores(data)
   sentence_count <- count_sentences(data)
@@ -474,7 +500,9 @@ standardized_score_and_topic <- function(data) {
 
 
 
-### Function to assing the most commonly discussed topic per document, dummy variable creation
+############################################################
+# Function to assing the most commonly discussed topic per document, dummy variable creation
+############################################################
 most_common_topics_dummy <- function(data) {
   # Step 1: Group by Date and topic_keyword, and summarize the count
   summarized_data <- data %>%
@@ -506,7 +534,9 @@ most_common_topics_dummy <- function(data) {
 
 
 
-### Function to retain word count per document from sentence word counts
+############################################################
+# Function to retain word count per document from sentence word counts
+############################################################
 process_word_count <- function(data) {
   data %>%
     group_by(Date) %>%
@@ -516,7 +546,9 @@ process_word_count <- function(data) {
 }
 
 
-### Function to calculate sentiment and uncertainty score from text
+############################################################
+# Function to calculate sentiment and uncertainty score from text
+############################################################
 sentiment <- function(data) {
   word_classification <- data %>%
     mutate(Text = tolower(Text)) %>%  # Convert text to lowercase
@@ -537,7 +569,9 @@ sentiment <- function(data) {
 }
 
 
-### Function to create word clouds of frequent words 
+############################################################
+# Function to create word clouds of frequent words 
+############################################################
 create_wordcloud_per_topic <- function(data, x) {
   # Summarize data to get the frequency of each word per topic
   summarized_data <- data %>%
@@ -574,7 +608,9 @@ create_wordcloud_per_topic <- function(data, x) {
 }
 
 
-### Function to create lagged observations
+############################################################
+# Function to create lagged observations
+############################################################
 create_lagged_columns <- function(data, column_name, max_lag) {
   # Iterate over the range of lags
   for (lag in 1:max_lag) {
@@ -586,7 +622,9 @@ create_lagged_columns <- function(data, column_name, max_lag) {
 }
 
 
-### Function for different readability measures
+############################################################
+# Function for different readability measures
+############################################################
 my_readability <- function (data){
   data%>%
   rowwise() %>%
