@@ -289,47 +289,52 @@ process_bigrams <- function(data, bigrams_terms, bi_grams_terms) {
 
 
 ### Function that assigns a score to all modifier and keyword combinationcalculate_scores
+calculate_scores <- function(Clean_file, All_terms) {
   # Step 1: Process and clean tokens
   Term <- Clean_file %>%
-    unnest_tokens(word, merged_sentence, token = "ngrams", n = 1) %>% # create individual words
+    unnest_tokens(word, merged_sentence, token = "ngrams", n = 1) %>%
     group_by(Date, sentence_id) %>%
     mutate(order = row_number()) %>%
     mutate(word = if_else(word %in% All_terms$term, word, NA_character_)) %>%
-    filter(!is.na(word)) %>%  # Remove rows with NA in the word column (words not in All_terms)
+    filter(!is.na(word)) %>%
     left_join(All_terms %>% dplyr::select(term, category, topic), by = c("word" = "term"), relationship = "many-to-many")
-  # Step 2: Identify keywords and modifiers
-  keywords <- Term %>%
-    filter(category %in% c("Hawkish Keyword", "Dovish Keyword"))
-
-  modifiers <- Term %>%
-    filter(category %in% c("High modifier", "Low modifier", "Positive modifier", "Negative modifier"))
   
-  negators <- Term %>%
-    filter(category %in% "Negators")
+  # Step 2: Identify categories
+  keywords <- Term %>% filter(category %in% c("Hawkish Keyword", "Dovish Keyword"))
+  modifiers <- Term %>% filter(category %in% c("High modifier", "Low modifier", "Positive modifier", "Negative modifier","Neutral Phrase"))
+  negators <- Term %>% filter(category == "Negator")
+  #neutrals <- Term %>% filter(category == "Neutral Phrase")
   
-  # Step 3: Join keywords and modifiers, calculate distances
+  # Step 3: Calculate distances between modifiers and keywords
   Score_with_distances <- modifiers %>%
     left_join(keywords, by = c("Date", "sentence_id","word_count"), suffix = c("_modifier", "_keyword"), relationship = "many-to-many") %>%
-    mutate(distance = abs(order_modifier - order_keyword)) %>% # define distances between keywords and modifiers
+    mutate(distance = abs(order_modifier - order_keyword)) %>%
     group_by(Date, sentence_id, word_modifier) %>%
-    filter(distance == min(distance) | (distance == min(distance) & order_keyword < order_modifier)) %>% # pair modifiers with keywords that are closest to it
-    ungroup() %>%
-    dplyr::select(-topic_modifier)  # Remove the topic_modifier column
+    filter(distance == min(distance) | (distance == min(distance) & order_keyword < order_modifier)) %>%
+    ungroup()
   
-  # Step 4: Assign scores based on modifier type and associated keyword category (based on rules below)
+  # Step 4: Assign scores
   Score <- Score_with_distances %>%
     group_by(Date, sentence_id) %>%
     mutate(
       has_keyword = any(category_keyword %in% c("Hawkish Keyword", "Dovish Keyword")),
-      negator_in_front = lag(word_modifier) %in% negators & lag(order_modifier) == order_modifier - 1) %>%
+      #is_neutral = category_keyword == "Neutral Phrase",
+      negator_in_front = lag(word_modifier) %in% negators$word & lag(order_modifier) == order_modifier - 1
+    ) %>%
     ungroup() %>%
     mutate(score = case_when(
+      # Neutral phrases score zero
+      #is_neutral ~ 0,
+      category_modifier == "Neutral Phrase" & category_keyword == "Hawkish Keyword" ~ 0,
+      category_modifier == "Neutral Phrase" & category_keyword == "Dovish Keyword" ~ 0,
       
+      # No keywords but modifiers are present
       !has_keyword & category_modifier == "High modifier" ~ 1,
       !has_keyword & category_modifier == "Positive modifier" ~ 1,
       !has_keyword & category_modifier == "Low modifier" ~ -1,
       !has_keyword & category_modifier == "Negative modifier" ~ -1,
       
+      # Modifiers and keywords combinations
       category_modifier == "High modifier" & category_keyword == "Hawkish Keyword" ~ 1,
       category_modifier == "High modifier" & category_keyword == "Dovish Keyword" ~ -1,
       category_modifier == "Low modifier" & category_keyword == "Hawkish Keyword" ~ -1,
@@ -346,69 +351,127 @@ process_bigrams <- function(data, bigrams_terms, bi_grams_terms) {
       category_modifier == "Negative modifier" & category_keyword == "Dovish Keyword" & topic_keyword == "Prices" ~ -1,
       category_modifier == "Negative modifier" & category_keyword == "Hawkish Keyword" & topic_keyword == "Prices" ~ 1,
       category_modifier == "Negative modifier" & topic_keyword == "Policy" ~ 1,
-      TRUE ~ 0  # Default case if no conditions match
+      TRUE ~ 0
     )) %>%
     
-    # Step 5: Reverse score if a negator is found directly before the modifier
-    mutate(score = if_else(negator_in_front, -score, score)) %>%
-    
-  # Return the final scored data frame
+    # Step 5: Reverse score if negator is in front
+    mutate(score = if_else(negator_in_front, -score, score))
+  
   return(Score)
 }
 
-
-### Function to calculate a standardized score per document and per topic
-standardized_score_and_topic <- function(data){
-  sentence<- data%>%
-    group_by(Date,sentence_id,topic_keyword)%>%
-    summarise(word_count = first(word_count),  # Retain word_count by taking the first value in each group
-              score =(sum(score, na.rm = TRUE))/word_count, # create an average score per sentence per topic
-              .groups = 'drop')%>%
-    group_by(Date,sentence_id)%>%
-    mutate(sentence_score = sum(score))%>% # create a score per sentence
-    ungroup()
-
-  # generate a number of sentences per document
+### Function to calculate a score per document (not standardized and not per topic)
+calculate_final_score <- function(data) {
+  sentence_scores <- data %>%
+    group_by(Date, sentence_id) %>%
+    summarize(
+      summed_score = sum(score, na.rm = TRUE),
+      word_count = first(word_count),
+      .groups = 'drop'
+    )%>%
+    mutate(sentence_score = summed_score / word_count)
+  
   sentence_count <- data %>%
     group_by(Date) %>%
     summarise(
       num_sentences = n_distinct(sentence_id),  # Count unique sentence IDs
       .groups = 'drop'
     )
-  # create a fraction each topic represents per sentence
-  topic_fraction<- sentence%>% 
-    left_join(sentence_count, by = "Date")%>%
-    group_by(Date,topic_keyword)%>%
-    mutate(
-      topic_fraction_sentence= ifelse(
-        sentence_score == 0 ,             #  denominator is 0
-        score,                             # Keep the numerator
-        score / sentence_score))%>%            # Perform the division otherwise
-    mutate(topic_fraction = sum(topic_fraction_sentence)/num_sentences)%>%
-    dplyr::select(Date,topic_keyword,topic_fraction)
-  topic_fraction <- unique(topic_fraction)
-  # Deduplicate sentence_scores
-  unique_sentence_scores <- sentence  %>%
-    distinct(Date, sentence_id, .keep_all = TRUE)  # Keep unique sentence IDs for each Date
-  # calculate a score per document and standardize it
-  total_score <- unique_sentence_scores%>%
+  
+  total_scores <- sentence_scores %>%
     left_join(sentence_count, by = "Date")%>%
     group_by(Date) %>%
-    summarise(total_document_score = round(sum((sentence_score), na.rm = TRUE) / first(num_sentences), 3),  # Use num_sentences in the calculation
+    summarise(final_score = round(sum(sentence_score, na.rm = TRUE) / first(num_sentences), 3),  # Use num_sentences in the calculation
               .groups = 'drop'
-    )%>%
-    mutate(Standardized_score = ((total_document_score - mean(total_document_score))/sd(total_document_score)) )
-  # summarise the results and create standardized scores per topic
-  standardized_topic_scores <- topic_fraction%>%
-    left_join(total_score, by = "Date")%>%
-    mutate(standardized_topic_score = Standardized_score * topic_fraction)%>%
-    dplyr::select(Date,topic_keyword,standardized_topic_score,Standardized_score)%>%
-    tidyr::pivot_wider(
-      names_from = topic_keyword, 
-      values_from = standardized_topic_score,
-      values_fill = 0 ) # Fill missing values with 0
+    )
+  return(total_scores)
+}
+
+
+### Function to calculate a standardized score per document and per topic
+standardized_score_and_topic <- function(data) {
+  # Step 1: Calculate sentence-level scores
+  calculate_sentence_scores <- function(data) {
+    data %>%
+      group_by(Date, sentence_id, topic_keyword) %>%
+      summarise(
+        word_count = first(word_count),  # Retain word count per sentence
+        score = sum(score, na.rm = TRUE) / word_count,  # Average score per topic per sentence
+        .groups = 'drop'
+      ) %>%
+      group_by(Date, sentence_id) %>%
+      mutate(sentence_score = sum(score, na.rm = TRUE)) %>%  # Total score per sentence
+      ungroup()
+  }
+  
+  # Step 2: Count sentences per document
+  count_sentences <- function(data) {
+    data %>%
+      group_by(Date) %>%
+      summarise(
+        num_sentences = n_distinct(sentence_id),  # Count unique sentence IDs
+        .groups = 'drop'
+      )
+  }
+  
+  # Step 3: Calculate topic fractions
+  calculate_topic_fractions <- function(sentence_data, sentence_count) {
+    sentence_data %>%
+      left_join(sentence_count, by = "Date") %>%
+      group_by(Date, sentence_id) %>%
+      mutate(num_topics_per_sentence = n_distinct(topic_keyword)) %>%
+      ungroup() %>%
+      group_by(Date, topic_keyword) %>%
+      mutate(
+        topic_fraction_sentence = ifelse(
+          sentence_score == 0 & score == 0, 
+          1 / num_topics_per_sentence, 
+          ifelse(sentence_score == 0, 
+                 1 / num_topics_per_sentence, 
+                 score / sentence_score)
+        ),
+        topic_fraction = sum(topic_fraction_sentence, na.rm = TRUE) / num_sentences
+      ) %>%
+      dplyr::select(Date, topic_keyword, topic_fraction) %>%
+      distinct()
+  }
+  
+  # Step 4: Calculate document scores
+  calculate_document_scores <- function(sentence_data, sentence_count) {
+    sentence_data %>%
+      distinct(Date, sentence_id, .keep_all = TRUE) %>%  # Deduplicate sentence scores
+      left_join(sentence_count, by = "Date") %>%
+      group_by(Date) %>%
+      summarise(
+        total_document_score = round(sum(sentence_score, na.rm = TRUE) / first(num_sentences), 3),  # Average per document
+        .groups = 'drop'
+      ) %>%
+      mutate(Standardized_score = (total_document_score - mean(total_document_score)) / sd(total_document_score))
+  }
+  
+  # Step 5: Calculate standardized topic scores
+  calculate_topic_scores <- function(topic_fraction, document_score) {
+    topic_fraction %>%
+      left_join(document_score, by = "Date") %>%
+      mutate(standardized_topic_score = Standardized_score * topic_fraction) %>%
+      dplyr::select(Date, topic_keyword, standardized_topic_score, Standardized_score) %>%
+      tidyr::pivot_wider(
+        names_from = topic_keyword, 
+        values_from = standardized_topic_score,
+        values_fill = 0  # Fill missing values with 0
+      )
+  }
+  
+  # Main process
+  sentence_scores <- calculate_sentence_scores(data)
+  sentence_count <- count_sentences(data)
+  topic_fraction <- calculate_topic_fractions(sentence_scores, sentence_count)
+  document_scores <- calculate_document_scores(sentence_scores, sentence_count)
+  standardized_topic_scores <- calculate_topic_scores(topic_fraction, document_scores)
+  
   return(standardized_topic_scores)
 }
+
 
 
 ### Function to assing the most commonly discussed topic per document, dummy variable creation
@@ -418,22 +481,29 @@ most_common_topics_dummy <- function(data) {
     group_by(Date, topic_keyword) %>%
     summarize(count = n(), .groups = 'drop')
   
-  # Step 2: Filter for the most common topic per Date
+  # Step 2: Filter for the most common topic(s) per Date
   most_common <- summarized_data %>%
     group_by(Date) %>%
     filter(count == max(count)) %>%
-    distinct(Date, topic_keyword, count)
+    ungroup()
   
-  # Step 3: Create dummy variables for `topic_keyword`
+  # Step 3: Resolve ties by randomly selecting one topic per Date
+  most_common <- most_common %>%
+    group_by(Date) %>%
+    slice_sample(n = 1) %>%  # Randomly select one row per Date
+    ungroup()
+  
+  # Step 4: Create dummy variables for `topic_keyword`
   most_common$topic_keyword <- as.factor(most_common$topic_keyword)
   topic_dummies <- model.matrix(~ topic_keyword - 1, data = most_common)
   
-  # Step 4: Add the dummy variables back to the original data frame
+  # Step 5: Add the dummy variables back to the most_common data frame
   result <- cbind(most_common, as.data.frame(topic_dummies))
   
   # Return the updated data frame
   return(result)
 }
+
 
 
 ### Function to retain word count per document from sentence word counts
@@ -514,3 +584,15 @@ create_lagged_columns <- function(data, column_name, max_lag) {
   }
   return(data)
 }
+
+
+### Function for different readability measures
+my_readability <- function (data){
+  data%>%
+  rowwise() %>%
+  mutate(
+    Flesch_Kincaid = textstat_readability(Text, measure = "Flesch.Kincaid")$Flesch.Kincaid) %>%
+  ungroup()
+}
+
+
