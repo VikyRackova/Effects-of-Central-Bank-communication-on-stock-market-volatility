@@ -154,8 +154,8 @@ write.csv(CPI_ECBD, file = "CPI_ECBD.csv",row.names = FALSE)
 write.csv(CPI_ECBM, file = "CPI_ECBM.csv",row.names = FALSE)
 write.csv(GDP_ECBD, file = "GDP_ECBD.csv",row.names = FALSE)
 write.csv(GDP_ECBM, file = "GDP_ECBM.csv",row.names = FALSE)
+
 write.csv(CPI_FEDD, file = "CPI_FEDD.csv",row.names = FALSE)
 write.csv(CPI_FEDM, file = "CPI_FEDM.csv",row.names = FALSE)
-write.csv(CPI_FEDM, file = "GDP_FEDD.csv",row.names = FALSE)
+write.csv(GDP_FEDD, file = "GDP_FEDD.csv",row.names = FALSE)
 write.csv(GDP_FEDM, file = "GDP_FEDM.csv",row.names = FALSE)
-
