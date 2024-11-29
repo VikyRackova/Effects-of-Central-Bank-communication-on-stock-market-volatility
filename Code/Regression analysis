@@ -1,0 +1,519 @@
+####################################### REGRESSION ANALYSIS OF THE RELATIONSHIP BETWEEN THE VOLATILITY AND HAWK-SCORE ############################################################
+###
+######################################
+# Load all the created files
+######################################
+# Score 
+######################################
+Final_score_ECBD<-read.csv("Final_score_ECBD.csv")
+Final_score_ECBD$Date <- as.Date(Final_score_ECBD$Date)
+Final_score_ECBM<-read.csv("Final_score_ECBM.csv")
+Final_score_ECBM$Date <- as.Date(Final_score_ECBM$Date)
+Final_score_FEDD<-read.csv("Final_score_FEDD.csv")
+Final_score_FEDD$Date <- as.Date(Final_score_FEDD$Date)
+Final_score_FEDM<-read.csv("Final_score_FEDM.csv")
+Final_score_FEDM$Date <- as.Date(Final_score_FEDM$Date)
+
+######################################
+# Volatility
+######################################
+volatility_STOXX<-read.csv("STOXX.csv")
+volatility_STOXX$Date<-as.Date(volatility_STOXX$Date,format = "%Y/%m/%d")
+volatility_VSTOXX<-read.csv("VSTOXX.csv")
+volatility_VSTOXX$Date<-as.Date(volatility_VSTOXX$Date,format = "%Y/%m/%d")
+volatility_SP500<-read.csv("SP500.csv")
+volatility_SP500$Date<-as.Date(volatility_SP500$Date,format = "%Y/%m/%d")
+volatility_VIX<-read.csv("VIX.csv")
+volatility_VIX$Date<-as.Date(volatility_VIX$Date,format = "%Y/%m/%d")
+
+######################################
+# Uncertainty
+######################################
+CPI_ECBD<-read.csv("CPI_ECBD.csv")
+CPI_ECBD$Date <- as.Date(CPI_ECBD$Date)
+CPI_ECBM<-read.csv("CPI_ECBM.csv")
+CPI_ECBM$Date <- as.Date(CPI_ECBM$Date)
+CPI_FEDD<-read.csv("CPI_FEDD.csv")
+CPI_FEDD$Date <- as.Date(CPI_FEDD$Date)
+CPI_FEDM<-read.csv("CPI_FEDM.csv")
+CPI_FEDM$Date <- as.Date(CPI_FEDM$Date)
+GDP_ECBD<-read.csv("GDP_ECBD.csv")
+GDP_ECBD$Date <- as.Date(GDP_ECBD$Date)
+GDP_ECBM<-read.csv("GDP_ECBM.csv")
+GDP_ECBM$Date <- as.Date(GDP_ECBM$Date)
+GDP_FEDD<-read.csv("GDP_FEDD.csv")
+GDP_FEDD$Date <- as.Date(GDP_FEDD$Date)
+GDP_FEDM<-read.csv("GDP_FEDM.csv")
+GDP_FEDM$Date <- as.Date(GDP_FEDM$Date)
+
+######################################
+# Readability
+######################################
+readability_ECBD<-read.csv("readability_ECBD.csv")
+readability_ECBD$Date <- as.Date(readability_ECBD$Date)
+readability_ECBM<-read.csv("readability_ECBM.csv")
+readability_ECBM$Date <- as.Date(readability_ECBM$Date)
+readability_FEDD<-read.csv("readability_FEDD.csv")
+readability_FEDD$Date <- as.Date(readability_FEDD$Date)
+readability_FEDM<-read.csv("readability_FEDM.csv")
+readability_FEDM$Date <- as.Date(readability_FEDM$Date)
+
+######################################
+# Sentiment
+######################################
+sentiment_score_ECBD<-read.csv("sentiment_score_ECBD.csv")
+sentiment_score_ECBD$Date <- as.Date(sentiment_score_ECBD$Date)
+sentiment_score_ECBM<-read.csv("sentiment_score_ECBM.csv")
+sentiment_score_ECBM$Date <- as.Date(sentiment_score_ECBM$Date)
+sentiment_score_FEDD<-read.csv("sentiment_score_FEDD.csv")
+sentiment_score_FEDD$Date <- as.Date(sentiment_score_FEDD$Date)
+sentiment_score_FEDM<-read.csv("sentiment_score_FEDM.csv")
+sentiment_score_FEDM$Date <- as.Date(sentiment_score_FEDM$Date)
+
+######################################
+# Topic Dummies
+######################################
+topics_ECBD_DUMMY<-read.csv("topics_ECBD_DUMMY.csv")
+topics_ECBD_DUMMY$Date <- as.Date(topics_ECBD_DUMMY$Date)
+topics_ECBM_DUMMY<-read.csv("topics_ECBM_DUMMY.csv")
+topics_ECBM_DUMMY$Date <- as.Date(topics_ECBM_DUMMY$Date)
+topics_FEDD_DUMMY<-read.csv("topics_FEDD_DUMMY.csv")
+topics_FEDD_DUMMY$Date <- as.Date(topics_FEDD_DUMMY$Date)
+topics_FEDM_DUMMY<-read.csv("topics_FEDM_DUMMY.csv")
+topics_FEDM_DUMMY$Date <- as.Date(topics_FEDM_DUMMY$Date)
+
+######################################
+# Word count
+######################################
+WCPD_ECBD<-read.csv("WCPD_ECBD.csv")
+WCPD_ECBD$Date <- as.Date(WCPD_ECBD$Date)
+WCPD_ECBM<-read.csv("WCPD_ECBM.csv")
+WCPD_ECBM$Date <- as.Date(WCPD_ECBM$Date)
+WCPD_FEDD<-read.csv("WCPD_FEDD.csv")
+WCPD_FEDD$Date <- as.Date(WCPD_FEDD$Date)
+WCPD_FEDM<-read.csv("WCPD_FEDM.csv")
+WCPD_FEDM$Date <- as.Date(WCPD_FEDM$Date)
+
+###
+#################################################### Create a data set with all metrics for each document type
+###
+
+ECBD <- Final_score_ECBD%>%
+  left_join(volatility_STOXX, by = "Date")%>%
+  left_join(volatility_VSTOXX, by = "Date")%>%
+  left_join(topics_ECBD_DUMMY, by = "Date")%>%
+  left_join(sentiment_score_ECBD, by = "Date")%>%
+  left_join(CPI_ECBD, by = "Date")%>%
+  left_join(GDP_ECBD, by = "Date")%>%
+  left_join(readability_ECBD, by = "Date")%>%
+  left_join(WCPD_ECBD, by = "Date")%>%
+  dplyr:: select(!c(topic_keyword,count,Text))
+colnames(ECBD) <- c("Date", "Standardized_score","Prices_score",
+                    "Policy_score","Finance_score","Growth_score","Global_score","Other_score", 
+                    "STOXX","STOXXT1","STOXXT2","STOXXT3","STOXXT4","STOXXT5",
+                    "STOXXT6","STOXXT7","STOXXT8","STOXXT9","STOXXT10", 
+                    "VSTOXX", "VSTOXXT1","VSTOXXT2","VSTOXXT3","VSTOXXT4","VSTOXXT5",
+                    "VSTOXXT6","VSTOXXT7","VSTOXXT8","VSTOXXT9","VSTOXXT10",
+                    "Finance","Growth","Other","Policy","Prices","Sentiment","Uncertainty",
+                    "CPI","GDP","Flesch_Kincaid","Word_count")
+
+
+ECBM <- Final_score_ECBM%>%
+  left_join(volatility_STOXX, by = "Date")%>%
+  left_join(volatility_VSTOXX, by = "Date")%>%
+  left_join(topics_ECBM_DUMMY, by = "Date")%>%
+  left_join(sentiment_score_ECBM, by = "Date")%>%
+  left_join(CPI_ECBM, by = "Date")%>%
+  left_join(GDP_ECBM, by = "Date")%>%
+  left_join(readability_ECBM, by = "Date")%>%
+  left_join(WCPD_ECBM, by = "Date")%>%
+  dplyr:: select(!c(topic_keyword,count,Text))
+colnames(ECBM) <- c("Date","Standardized_score","Policy_score","Prices_score",
+                    "Finance_score","Growth_score","Global_score","Other_score", 
+                    "STOXX","STOXXT1","STOXXT2","STOXXT3","STOXXT4","STOXXT5",
+                    "STOXXT6","STOXXT7","STOXXT8","STOXXT9","STOXXT10", 
+                    "VSTOXX", "VSTOXXT1","VSTOXXT2","VSTOXXT3","VSTOXXT4","VSTOXXT5",
+                    "VSTOXXT6","VSTOXXT7","VSTOXXT8","VSTOXXT9","VSTOXXT10",
+                    "Finance","Growth","Other","Policy","Prices","Sentiment","Uncertainty",
+                    "CPI","GDP","Flesch_Kincaid","Word_count")
+
+FEDD <- Final_score_FEDD%>%
+  left_join(volatility_SP500, by = "Date")%>%
+  left_join(volatility_VIX, by = "Date")%>%
+  left_join(topics_FEDD_DUMMY, by = "Date")%>%
+  left_join(sentiment_score_FEDD, by = "Date")%>%
+  left_join(CPI_FEDD, by = "Date")%>%
+  left_join(GDP_FEDD, by = "Date")%>%
+  left_join(readability_FEDD, by = "Date")%>%
+  left_join(WCPD_FEDD, by = "Date")%>%
+  dplyr:: select(!c(topic_keyword,count,Text))
+colnames(FEDD) <- c("Date", "Standardized_score","Policy_score","Growth_score","Prices_score",
+                    "Global_score","Other_score","Finance_score", 
+                    "SP500","SP500T1","SP500T2","SP500T3","SP500T4","SP500T5",
+                    "SP500T6","SP500T7","SP500T8","SP500T9","SP500T10", 
+                    "VIX", "VIXT1","VIXT2","VIXT3","VIXT4","VIXT5",
+                    "VIXT6","VIXT7","VIXT8","VIXT9","VIXT10",
+                    "Finance","Global","Growth","Other","Policy","Prices","Sentiment","Uncertainty",
+                    "CPI","GDP","Flesch_Kincaid","Word_count")
+
+FEDM <- Final_score_FEDM%>%
+  left_join(volatility_SP500, by = "Date")%>%
+  left_join(volatility_VIX, by = "Date")%>%
+  left_join(topics_FEDM_DUMMY, by = "Date")%>%
+  left_join(sentiment_score_FEDM, by = "Date")%>%
+  left_join(CPI_FEDM, by = "Date")%>%
+  left_join(GDP_FEDM, by = "Date")%>%
+  left_join(readability_FEDM, by = "Date")%>%
+  left_join(WCPD_FEDM, by = "Date")%>%
+  dplyr:: select(!c(topic_keyword,count,Text))
+colnames(FEDM) <- c("Date","Standardized_score","Global_score","Finance_score","Policy_score","Growth_score","Other_score","Prices_score", 
+                    "SP500","SP500T1","SP500T2","SP500T3","SP500T4","SP500T5",
+                    "SP500T6","SP500T7","SP500T8","SP500T9","SP500T10", 
+                    "VIX", "VIXT1","VIXT2","VIXT3","VIXT4","VIXT5",
+                    "VIXT6","VIXT7","VIXT8","VIXT9","VIXT10",
+                    "Finance","Growth","Prices","Sentiment","Uncertainty",
+                    "CPI","GDP","Flesch_Kincaid","Word_count")
+
+
+############################################################
+# Simple regression  - volatility on hawk-score 
+############################################################
+## ECBD
+# volatility index
+baselinemodel_ECBD_VSTOXX<- lm(VSTOXX~Standardized_score, data = ECBD)
+summary(baselinemodel_ECBD_VSTOXX)
+# price volatility
+baselinemodel_ECBD_STOXX<- lm(STOXX~Standardized_score, data = ECBD)
+summary(baselinemodel_ECBD_STOXX)
+
+## ECBM
+# volatility index
+baselinemodel_ECBM_VSTOXX<- lm(VSTOXX~Standardized_score, data = ECBM)
+summary(baselinemodel_ECBM_VSTOXX)
+# price volatility
+baselinemodel_ECBM_STOXX<- lm(STOXX~Standardized_score, data = ECBM)
+summary(baselinemodel_ECBM_STOXX)
+
+## FEDD
+# volatility index
+baselinemodel_FEDD_VIX<- lm(VIX~Standardized_score, data = FEDD)
+summary(baselinemodel_FEDD_VIX)
+# price volatility
+baselinemodel_FEDD_SP500<- lm(SP500~Standardized_score , data= FEDD)
+summary(baselinemodel_FEDD_SP500)
+
+## FEDM
+# volatility index
+baselinemodel_FEDM_VIX<- lm(VIX~Standardized_score, data = FEDM)
+summary(baselinemodel_FEDM_VIX)
+# price volatility
+baselinemodel_FEDM_SP500<- lm(SP500~Standardized_score , data = FEDM)
+summary(baselinemodel_FEDM_SP500)
+
+
+############################################################
+# Model with a volatility lag 
+############################################################
+## ECBD
+# volatility index
+laggedmodel_ECBD_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1, data = ECBD)
+summary(laggedmodel_ECBD_VSTOXX)
+# price volatility
+laggedmodel_ECBD_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1, data = ECBD)
+summary(laggedmodel_ECBD_STOXX)
+
+## ECBM
+# volatility index
+laggedmodel_ECBM_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1, data =ECBM)
+summary(laggedmodel_ECBM_VSTOXX)
+# price volatility
+laggedmodel_ECBM_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1, data = ECBM)
+summary(laggedmodel_ECBM_STOXX)
+
+## FEDD
+# volatility index
+laggedmodel_FEDD_VIX <- lm(VIX ~ Standardized_score + VIXT1, data = FEDD)
+summary(laggedmodel_FEDD_VIX)
+# price volatility
+laggedmodel_FEDD_SP500 <- lm(SP500 ~ Standardized_score + SP500T1, data = FEDD)
+summary(laggedmodel_FEDD_SP500)
+
+## FEDM
+# volatility index
+laggedmodel_FEDM_VIX <- lm(VIX ~ Standardized_score + VIXT1, data = FEDM)
+summary(laggedmodel_FEDM_VIX)
+# price volatility
+laggedmodel_FEDM_SP500 <- lm(SP500 ~ Standardized_score + SP500T1, data = FEDM)
+summary(laggedmodel_FEDM_SP500)
+
+
+
+############################################################ 
+# Model with volatility lag and topic dummies 
+############################################################
+## ECBD
+# volatility index
+topicmodel_ECBD_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1 + Finance + Growth + Policy + Other, data = ECBD)# price is the base,
+summary(topicmodel_ECBD_VSTOXX)
+# price volatility
+topicmodel_ECBD_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1+ Finance + Growth+ Policy + Other, data = ECBD)# price is the base,
+summary(topicmodel_ECBD_STOXX)
+
+## ECBM
+# volatility index
+topicmodel_ECBM_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1+ Finance + Growth + Policy  + Other, data = ECBM)# price is the base, other topics do not exist
+summary(topicmodel_ECBM_VSTOXX)
+# price volatility
+topicmodel_ECBM_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1 + Finance + Growth+ Policy + Other, data = ECBM)# price is the base, other topics do not exist
+summary(topicmodel_ECBM_STOXX)
+
+##FEDD
+# volatility index
+topicmodel_FEDD_VIX <- lm(VIX ~ Standardized_score + VIXT1 + Finance + Growth+ Policy + Global + Other, data = FEDD)# price is the base,
+summary(topicmodel_FEDD_VIX)
+# price volatility index 
+topicmodel_FEDD_SP500 <- lm(SP500 ~ Standardized_score + SP500T1+ Finance + Growth+ Policy + Global + Other, data = FEDD)# price is the base,
+summary(topicmodel_FEDD_SP500)
+
+## FEDM
+# volatility index
+topicmodel_FEDM_VIX <- lm(VIX ~ Standardized_score + VIXT1 + Finance + Growth, data = FEDM) # price is the base, other topics do not exist
+summary(topicmodel_FEDM_VIX)
+# price volatility 
+topicmodel_FEDM_SP500 <- lm(SP500 ~ Standardized_score + SP500T1+ Finance + Growth, data = FEDM)# price is the base, other topics do not exist
+summary(topicmodel_FEDM_SP500)
+
+############################################################
+# Model with sentiment, lag (without dummies) 
+############################################################
+##ECBD
+# volatility index 
+sentimentmodel_ECBD_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1 + Sentiment + Uncertainty, data = ECBD)
+summary(sentimentmodel_ECBD_VSTOXX)
+# price volatility 
+sentimentmodel_ECBD_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1 + Sentiment + Uncertainty, data = ECBD)
+summary(sentimentmodel_ECBD_STOXX)
+
+##ECBM
+# volatility index 
+sentimentmodel_ECBM_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1 + Sentiment + Uncertainty, data = ECBM )
+summary(sentimentmodel_ECBM_VSTOXX)
+# price volatility 
+sentimentmodel_ECBM_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1 + Sentiment + Uncertainty, data = ECBM )
+summary(sentimentmodel_ECBM_STOXX)
+
+##FEDD
+# volatility index 
+sentimentmodel_FEDD_VIX <- lm(VIX ~ Standardized_score + VIXT1 + Sentiment + Uncertainty, data = FEDD)
+summary(sentimentmodel_FEDD_VIX)
+# price volatility 
+sentimentmodel_FEDD_SP500 <- lm(SP500 ~ Standardized_score + SP500T1 + Sentiment + Uncertainty, data = FEDD)
+summary(sentimentmodel_FEDD_SP500)
+
+## FEDM
+# volatility index 
+sentimentmodel_FEDM_VIX <- lm(VIX ~ Standardized_score + VIXT1 + Sentiment + Uncertainty, data = FEDM)
+summary(sentimentmodel_FEDM_VIX)
+# price volatility 
+sentimentmodel_FEDM_SP500 <- lm(SP500 ~ Standardized_score + SP500T1 + Sentiment + Uncertainty, data = FEDM)
+summary(sentimentmodel_FEDM_SP500)
+
+############################################################
+# Model with uncertainty and lag 
+############################################################
+## ECB 
+# price volatility 
+uncertainty_model_ECBD_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1 + CPI + GDP, data = ECBD)
+summary(uncertainty_model_ECBD_STOXX)
+# volatility index
+uncertainty_model_ECBD_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1 + CPI + GDP, data = ECBD)
+summary(uncertainty_model_ECBD_VSTOXX)
+
+## ECBM
+# price volatility 
+uncertainty_model_ECBM_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1 + CPI + GDP, data = ECBM)
+summary(uncertainty_model_ECBM_STOXX)
+# volatility index
+uncertainty_model_ECBM_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1 + CPI + GDP, data = ECBM)
+summary(uncertainty_model_ECBM_VSTOXX)
+
+### FEDD
+# price volatility 
+uncertainty_model_FEDD_SP500 <- lm(SP500 ~ Standardized_score + SP500T1 + CPI + GDP, data = FEDD)
+summary(uncertainty_model_FEDD_SP500)
+# volatility index
+uncertainty_model_FEDD_VIX <- lm(VIX ~ Standardized_score + VIXT1 + CPI + GDP, data = FEDD)
+summary(uncertainty_model_FEDD_VIX)
+
+## FEDM
+# price volatility 
+uncertainty_model_FEDM_SP500 <- lm(SP500 ~ Standardized_score + SP500T1 + CPI + GDP, data = FEDM)
+summary(uncertainty_model_FEDM_SP500)
+# volatility index
+uncertainty_model_FEDM_VIX <- lm(VIX ~ Standardized_score + VIXT1 + CPI + GDP, data = FEDM)
+summary(uncertainty_model_FEDM_VIX)
+
+
+############################################################
+# Model with readability with a lag 
+############################################################
+## ECB 
+# price volatility 
+readability_model_ECBD_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1 + Flesch_Kincaid, data = ECBD)
+summary(readability_model_ECBD_STOXX)
+# volatility index
+readability_model_ECBD_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1 + Flesch_Kincaid, data = ECBD)
+summary(readability_model_ECBD_VSTOXX)
+
+## ECBM
+# price volatility 
+readability_model_ECBM_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1 + Flesch_Kincaid, data = ECBM)
+summary(readability_model_ECBM_STOXX)
+# volatility index
+readability_model_ECBM_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1 + Flesch_Kincaid, data = ECBM)
+summary(readability_model_ECBM_VSTOXX)
+
+### FEDD
+# price volatility 
+readability_model_FEDD_SP500 <- lm(SP500 ~ Standardized_score + SP500T1 + Flesch_Kincaid, data = FEDD)
+summary(readability_model_FEDD_SP500)
+# volatility index
+readability_model_FEDD_VIX <- lm(VIX ~ Standardized_score + VIXT1 + Flesch_Kincaid, data = FEDD)
+summary(readability_model_FEDD_VIX)
+
+## FEDM
+# price volatility 
+readability_model_FEDM_SP500 <- lm(SP500 ~ Standardized_score + SP500T1 + Flesch_Kincaid, data = FEDM)
+summary(readability_model_FEDM_SP500)
+# volatility index
+readability_model_FEDM_VIX <- lm(VIX ~ Standardized_score + VIXT1 + Flesch_Kincaid, data = FEDM)
+summary(readability_model_FEDM_VIX)
+
+
+
+############################################################
+# Model with trend and lag  
+############################################################
+## ECBD
+# volatility index
+trend_ECBD_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1 + I(1:length(VSTOXXT1)), data = ECBD)
+summary(trend_ECBD_VSTOXX)
+# price volatility
+trend_ECBD_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1+ I(1:length(STOXXT1)), data = ECBD)
+summary(trend_ECBD_STOXX)
+
+## ECBM
+# volatility index
+trend_ECBM_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1+ I(1:length(VSTOXXT1)), data =ECBM)
+summary(trend_ECBM_VSTOXX)
+# price volatility
+trend_ECBM_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1+ I(1:length(STOXXT1)), data = ECBM)
+summary(trend_ECBM_STOXX)
+
+## FEDD
+# volatility index
+trend_FEDD_VIX <- lm(VIX ~ Standardized_score + VIXT1 + I(1:length(VIXT1)), data = FEDD)
+summary(trend_FEDD_VIX)
+# price volatility
+trend_FEDD_SP500 <- lm(SP500 ~ Standardized_score + SP500T1 + I(1:length(SP500T1)), data = FEDD)
+summary(trend_FEDD_SP500)
+
+## FEDM
+# volatility index
+trend_FEDM_VIX <- lm(VIX ~ Standardized_score + VIXT1 + I(1:length(VIXT1)), data = FEDM)
+summary(trend_FEDM_VIX)
+# price volatility
+trend_FEDM_SP500 <- lm(SP500 ~ Standardized_score + SP500T1 + I(1:length(SP500T1)), data = FEDM)
+summary(trend_FEDM_SP500)
+
+############################################################
+# Model with topic scores and lag  
+############################################################
+## ECBD
+# volatility index
+topicscore_ECBD_VSTOXX <- lm(VSTOXX ~ VSTOXXT1
+                             + Finance_score + Prices_score + Global_score + 
+                               Growth_score + Policy_score + Other_score, data = ECBD)
+summary(topicscore_ECBD_VSTOXX)
+# price volatility
+topicscore_ECBD_STOXX <- lm(STOXX ~  STOXXT1 
+                            + Finance_score + Prices_score + Global_score + 
+                              Growth_score + Policy_score +Other_score, data = ECBD)
+summary(topicscore_ECBD_STOXX)
+
+## ECBM
+# volatility index
+topicscore_ECBM_VSTOXX <- lm(VSTOXX ~   VSTOXXT1 + Global_score + 
+                               Growth_score + Finance_score + Prices_score + Policy_score + Other_score, data =ECBM)
+summary(topicscore_ECBM_VSTOXX)
+# price volatility
+topicscore_ECBM_STOXX <- lm(STOXX ~  STOXXT1 + Global_score + 
+                              Growth_score+ Finance_score + Prices_score + Policy_score + Other_score, data = ECBM) ## global and growth return NA thus are excluded
+summary(topicscore_ECBM_STOXX)
+
+## FEDD
+# volatility index
+topicscore_FEDD_VIX <- lm(VIX ~  VIXT1 
+                          + Finance_score + Prices_score + Global_score + 
+                            Growth_score + Policy_score + Other_score, data = FEDD)
+summary(topicscore_FEDD_VIX)
+# price volatility
+topicscore_FEDD_SP500 <- lm(SP500 ~  SP500T1 
+                            + Finance_score + Prices_score + Global_score + 
+                              Growth_score + Policy_score + Other_score, data = FEDD)
+summary(topicscore_FEDD_SP500)
+
+## FEDM
+# volatility index
+topicscore_FEDM_VIX <- lm(VIX ~  VIXT1 + Finance_score + Prices_score + Global_score + 
+                            Growth_score + Policy_score + Other_score, data = FEDM)
+summary(topicscore_FEDM_VIX)
+# price volatility
+topicscore_FEDM_SP500 <- lm(SP500 ~  SP500T1 
+                            + Finance_score + Prices_score + Global_score + 
+                              Growth_score + Policy_score + Other_score, data = FEDM)
+summary(topicscore_FEDM_SP500)
+
+############################################################
+# Model with 10 lags 
+############################################################
+## ECBD
+# volatility index
+lagged10model_ECBD_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1+ VSTOXXT2+ VSTOXXT3+ VSTOXXT4
+                                + VSTOXXT5+ VSTOXXT6+ VSTOXXT7+ VSTOXXT8+ VSTOXXT9+ VSTOXXT10, data = ECBD)
+summary(lagged10model_ECBD_VSTOXX)
+# price volatility
+lagged10model_ECBD_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1+ STOXXT2+ STOXXT3+ STOXXT4+ STOXXT5+ STOXXT6
+                               + STOXXT7+ STOXXT8+ STOXXT9+ STOXXT10, data = ECBD)
+summary(lagged10model_ECBD_STOXX)
+
+## ECBM
+# volatility index
+lagged10model_ECBM_VSTOXX <- lm(VSTOXX ~ Standardized_score + VSTOXXT1+ VSTOXXT2+ VSTOXXT3+ VSTOXXT4
+                                + VSTOXXT5+ VSTOXXT6+ VSTOXXT7+ VSTOXXT8+ VSTOXXT9+ VSTOXXT10, data =ECBM)
+summary(lagged10model_ECBM_VSTOXX)
+# price volatility
+lagged10model_ECBM_STOXX <- lm(STOXX ~ Standardized_score + STOXXT1 + STOXXT2+ STOXXT3+ STOXXT4+ STOXXT5+ STOXXT6
+                               + STOXXT7+ STOXXT8+ STOXXT9+ STOXXT10, data = ECBM)
+summary(lagged10model_ECBM_STOXX)
+
+## FEDD
+# volatility index
+lagged10model_FEDD_VIX <- lm(VIX ~ Standardized_score + VIXT1 + VIXT2 + VIXT3 + VIXT4 + VIXT5 + VIXT6 + VIXT7
+                             + VIXT8 + VIXT9 + VIXT10, data = FEDD)
+summary(lagged10model_FEDD_VIX)
+# price volatility
+lagged10model_FEDD_SP500 <- lm(SP500 ~ Standardized_score + SP500T1 + SP500T2 + SP500T3 + SP500T4 + SP500T5 + SP500T6
+                               + SP500T7 + SP500T8 + SP500T9 + SP500T10, data = FEDD)
+summary(lagged10model_FEDD_SP500)
+
+## FEDM
+# volatility index
+lagged10model_FEDM_VIX <- lm(VIX ~ Standardized_score + VIXT1+ VIXT2 + VIXT3 + VIXT4 + VIXT5 + VIXT6 + VIXT7
+                             + VIXT8 + VIXT9 + VIXT10, data = FEDM)
+summary(lagged10model_FEDM_VIX)
+# price volatility
+lagged10model_FEDM_SP500 <- lm(SP500 ~ Standardized_score + SP500T1 + SP500T2 + SP500T3 + SP500T4 + SP500T5 + SP500T6
+                               + SP500T7 + SP500T8 + SP500T9 + SP500T10, data = FEDM)
+summary(lagged10model_FEDM_SP500)
+
