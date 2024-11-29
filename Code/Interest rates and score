@@ -1,0 +1,86 @@
+############################## Test for the predictive power of score to the changes in interest rates ##############################
+############################################
+# Load the data - scores and interest rates
+Final_score_ECBD<-read.csv("Final_score_ECBD.csv")%>%
+  dplyr::select(Date,Standardized_score)
+Final_score_ECBD$Date <- as.Date(Final_score_ECBD$Date)#, format = "%m/%d/%Y" )
+Final_score_FEDD<-read.csv("Final_score_FEDD.csv")%>%
+  dplyr::select(Date,Standardized_score)
+Final_score_FEDD$Date <- as.Date(Final_score_FEDD$Date)
+
+#### Document with interest rates from ECB
+ECB_rates<- read.csv("ECB effective data interest changes.csv")
+colnames(ECB_rates) <- c("Date","Time","Rate")
+ECB_rates$Date <- as.Date(ECB_rates$Date, format = "%Y-%m-%d")
+
+#### Document with interest rates from FED
+FED_1 <- read.csv("DFEDTAR.csv")
+colnames(FED_1)<-c("DATE","Rate")
+FED_2 <- read.csv("DFEDTARU.csv")
+colnames(FED_2)<-c("DATE","Rate")
+FED_rates <- rbind(FED_1,FED_2)
+
+### Calculate the changes in interest rates for ECB
+ECB_rates<- ECB_rates %>%
+  mutate(Change = Rate - lag(Rate))%>%
+  dplyr::select(Date,Change)%>%
+  filter(Change>0)
+ECB_rates <- ECB_rates[-1, ] %>%
+  filter(Date != as.Date("2022-11-02"))# omit first observation as we miss a data point
+
+# Split the data set to be able to find the date of decisions matched with the interest change date 
+ECB_rates_1period<- ECB_rates%>%
+  filter(year(Date) < 2005)
+ECB_rates_2005<-ECB_rates%>%
+  filter(year(Date) == 2005)
+ECB_rates_2nd<-ECB_rates%>%
+  filter(year(Date) > 2005 & year(Date) < 2012)
+ECB_rates_rest<-ECB_rates%>%
+  filter(year(Date) > 2012 )
+
+#### Find the coresponding Decisions meeting
+Final_score_ECBD_1st <- Final_score_ECBD%>%
+  filter(Date %in% (ECB_rates_1period$Date - 1))
+
+Final_score_ECBD_2005 <- Final_score_ECBD%>%
+  filter(Date %in% (ECB_rates_2005$Date - 5))
+
+Final_score_ECBD_2nd <- Final_score_ECBD%>%
+  filter(Date %in% c(ECB_rates_2nd$Date - 6, ECB_rates_2nd$Date - 7))
+
+Final_score_ECBD_rest <- Final_score_ECBD%>%
+  filter(Date %in% c(ECB_rates_rest$Date,ECB_rates_rest$Date - 6 ))
+
+## Create data set with the interest rate change and the meeting score
+Rate_change_score <- rbind(Final_score_ECBD_1st,Final_score_ECBD_2005,Final_score_ECBD_2nd,Final_score_ECBD_rest)
+Rate_change <- cbind(ECB_rates,Rate_change_score$Standardized_score)
+
+## Create document with all the dates when the interest rates remained unchanged
+No_rate_change <- Final_score_ECBD%>%
+  filter(!(Date %in% Rate_change$Date))
+zeros_vector <- rep(0, length(No_rate_change$Date))
+NO_RATE <- cbind(No_rate_change,zeros_vector)
+colnames(NO_RATE)<- c("Date","Standardized score","Interest Change")
+NO_RATE <- NO_RATE%>%
+  dplyr::select(Date,"Interest Change","Standardized score")
+colnames(Rate_change)<- c("Date","Interest Change","Standardized score")
+### Merge the 2 data sets
+ECB_rate_changes<- rbind(Rate_change,NO_RATE)
+
+
+### Calculate the changes in interest rates for FED
+FED_rates <- FED_rates %>%
+  mutate(Change = Rate - lag(Rate))%>%
+  dplyr::select(DATE,Change)%>%
+  filter(DATE %in% Final_score_FEDD$Date)
+
+### calculate the correlation and create a regression
+(correlationECB<-(cor.test(ECB_rate_changes$`Standardized score`,ECB_rate_changes$`Interest Change`)))
+model_check_ECB<-lm(ECB_rate_changes$`Interest Change`~ECB_rate_changes$`Standardized score`)
+summary(model_check_ECB)
+
+
+(correlationFED <- (cor.test(FED_rates$Change,Final_score_FEDD$Standardized_score)))
+model_check_FED<-lm(FED_rates$Change~Final_score_FEDD$Standardized_score)
+summary(model_check_FED)
+
