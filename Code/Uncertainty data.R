@@ -7,7 +7,9 @@ library(tidyr)
 library(lubridate)
 
 
-########################################################################################################## Load downloaded data from Survey of Professional Forecasters and Hawk-score ##########################################################################################################
+############################################################
+# Load downloaded data from Survey of Professional Forecasters and Hawk-score 
+############################################################
 inflation_uncertainty_US <-read.xlsx("Dispersion_CPI_US.xlsx")
 colnames(inflation_uncertainty_US) <- c("Quarter", "P25", "P75", "Uncertainty")
 
@@ -31,7 +33,10 @@ Final_score_FEDD$Date <- as.Date(Final_score_FEDD$Date)
 Final_score_FEDM<-read.csv("Final_score_FEDM.csv")
 Final_score_FEDM$Date <- as.Date(Final_score_FEDM$Date)
 
-########################################################################################################## Estimate uncertainty as variance/dispersion of forecasts ##########################################################################################################
+############################################################
+# Estimate uncertainty as variance/dispersion of forecasts 
+############################################################
+
 CPI_US <- inflation_uncertainty_US %>%
   filter(!is.na(P25) & !is.na(P75) & grepl("^[0-9.]+$", P25) & grepl("^[0-9.]+$", P75)) %>%
   mutate(
@@ -64,7 +69,9 @@ GDP_EU <- GDP_uncertainty_EU%>%
   mutate(Uncertainty = 100 * Variance)%>%
   dplyr::select(quarter_start,Uncertainty)
 
-########################################################################################################## Extrapolate missing data ##########################################################################################################
+############################################################
+# Extrapolate missing data 
+############################################################
 # Generate all possible quarters
 all_quarters <- tibble(
   quarter_start = seq(
@@ -98,7 +105,9 @@ GDP_EU_filled <- all_quarters %>%
   arrange(quarter_start) %>%                # Ensure quarters are in order
   fill(Uncertainty, .direction = "down")    # Fill missing values with the last observation
 
-############################################### Filter the uncertainty based on the closest quarter and merge with dates of reported Hawk-score ###############################################
+############################################################
+# Filter the uncertainty based on the closest quarter and merge with dates of reported Hawk-score 
+############################################################
 ### FEDD
 uncertainty_FEDD <- Final_score_FEDD %>%
   mutate(closest_quarter = floor_date(Date, "quarter"))
