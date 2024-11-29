@@ -4,10 +4,14 @@ library(readxl)
 library(quantmod)
 library(dplyr)
 
+###
 ########################################################## GATHER VOLATILITY DATA FROM YAHOO FINANCE (OR OTHER SOURCES) ########################################################## 
+###
 # Define a start date
 start_date <- as.Date("1994-01-01")
-### US indices
+############################################################
+# US indices
+############################################################
 ### Volatility index - VIX
 getSymbols("^VIX", src = "yahoo", from = start_date)
 VIX <- data.frame(Date = index(VIX), coredata(VIX)[, c("VIX.Open", "VIX.Close")])%>% # keep only Open and Close
@@ -19,7 +23,9 @@ SP500 <- data.frame(Date = index(GSPC), coredata(GSPC)[, c("GSPC.High", "GSPC.Lo
   mutate(Date = sapply(Date, standardize_date))
 colnames(SP500)[-1] <- c("SP500.High", "SP500.Low")  # Rename columns to identify S&P 500 data
 
-### EU indices
+############################################################
+# EU indices
+############################################################
 ### Volatility index - VSTOXX (not available at Yahoo finance, obtained from Factset)
 VSTOXX <-read.csv("VSTOXX EUR Historical Data.csv")
 ### Market index - STOXX
@@ -28,7 +34,10 @@ STOXX <- data.frame(Date = index(STOXX), coredata(STOXX)[, c("STOXX.High", "STOX
   mutate(Date = sapply(Date, standardize_date))
 colnames(STOXX)[-1] <- c("STOXX.High", "STOXX.Low")  # Rename columns to identify VIX data
 
+
+###
 ########################################################## CALCULATE PERCENTAGE CHANGE IN VOLATILITY AND STORE ITS LAGS ########################################################## 
+###
 STOXX <- STOXX %>%
   mutate(Percent_change.STOXX = 100*(log(STOXX.High)-log(STOXX.Low)))%>%
   dplyr::select(Date,Percent_change.STOXX)%>%
