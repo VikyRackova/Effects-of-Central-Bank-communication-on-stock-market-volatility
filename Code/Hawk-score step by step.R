@@ -746,3 +746,13 @@ write.csv(sentiment_score_ECBM, file = "sentiment_score_ECBM.csv",row.names = FA
 write.csv(sentiment_score_FEDD, file = "sentiment_score_FEDD.csv",row.names = FALSE)
 write.csv(sentiment_score_FEDM, file = "sentiment_score_FEDM.csv",row.names = FALSE)
           
+######################################################################################### CREATE SCORES OF READABILITY  #########################################################################################
+readability_ECBD<-my_readability(Decisions_ECB)
+readability_FEDD<-my_readability(Decisions_FED)
+readability_ECBM<-my_readability(Minutes_ECB)
+readability_FEDM<-my_readability(Minutes_FED)
+
+write.csv(readability_ECBD, file = "readability_ECBD.csv",row.names = FALSE)
+write.csv(readability_ECBM, file = "readability_ECBM.csv",row.names = FALSE)
+write.csv(readability_FEDD, file = "readability_FEDD.csv",row.names = FALSE)
+write.csv(readability_FEDM, file = "readability_FEDM.csv",row.names = FALSE)
