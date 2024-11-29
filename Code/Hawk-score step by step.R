@@ -26,10 +26,13 @@ library(RColorBrewer)
 ###
 # Note: Links from ECB minutes and decisions were gathered manually and are provided in the Excel files ("ECB Decisions links" and "ECB Minutes links")
 
-###
-####################################################### Save links to FOMC decisions #######################################################
-###
-############################## Scrape FOMC Statements 
+############################################################ 
+# Save links to FOMC decisions 
+############################################################
+#
+############################################################
+# Scrape FOMC Statements 
+############################################################
 ############################################################
 # Period 1994–2018
 ############################################################
@@ -66,8 +69,6 @@ for (year in 1994:2018) {
 base_url <- "https://www.federalreserve.gov" # Define the base URL for the Federal Reserve website
 decisions <- ifelse(grepl("^http", decisions), decisions, paste0(base_url, decisions))
 links <- data.frame(year = years, link = decisions, stringsAsFactors = FALSE) # save the links to a dataset
-
-
 ############################################################
 # Period 2019-2024
 ############################################################
@@ -92,27 +93,26 @@ Statements <- rbind(links,links_df1)
 # Save the results
 write.xlsx(Statements, file = "FOMC Statements links.xlsx")
 
-###
-####################################################### Save links to FOMC minutes #######################################################
-###
+
+
+############################################################
+# Save links to FOMC minutes 
+############################################################
 # Note: accessing the links for the minutes needs to be divided into several periods because of the difference in HTML formatting
 # Base URL
 base_url <- "https://www.federalreserve.gov"
-
 # Initialize lists for different periods
 periods <- list()
-
 ############################################################
 # Period 1994–2006
 ############################################################
 minutes_1994_2006 <- c()
 dates_1994_2006 <- c()
-
 for (year in 1994:2006) {
   page_link <- paste0(base_url, "/monetarypolicy/fomchistorical", year, ".htm")
   page <- tryCatch(read_html(page_link), error = function(e) NULL)
   if (is.null(page)) next
-  
+
   nodes <- page %>% html_nodes(xpath = "//p[a[contains(text(), 'Minutes')]]")
   for (node in nodes) {
     link <- node %>% html_node("a") %>% html_attr("href")
@@ -125,13 +125,11 @@ for (year in 1994:2006) {
 }
 urls_1994_2006 <- data.frame(Date = dates_1994_2006, Link = minutes_1994_2006, stringsAsFactors = FALSE)
 periods[["1994–2006"]] <- urls_1994_2006
-
 ############################################################
 # Period 2007–2010
 ############################################################
 minutes_2007_2010 <- c()
 dates_2007_2010 <- c()
-
 for (year in 2007:2010) {
   page_link <- paste0(base_url, "/monetarypolicy/fomchistorical", year, ".htm")
   page <- tryCatch(read_html(page_link), error = function(e) NULL)
@@ -149,13 +147,11 @@ for (year in 2007:2010) {
 }
 urls_2007_2010 <- data.frame(Date = dates_2007_2010, Link = minutes_2007_2010, stringsAsFactors = FALSE)
 periods[["2007–2010"]] <- urls_2007_2010
-
 ############################################################
 # Period 2011–2018
 ############################################################
 minutes_2011_2018 <- c()
 dates_2011_2018 <- c()
-
 for (year in 2011:2018) {
   page_link <- paste0(base_url, "/monetarypolicy/fomchistorical", year, ".htm")
   page <- tryCatch(read_html(page_link), error = function(e) NULL)
@@ -173,20 +169,17 @@ for (year in 2011:2018) {
 }
 urls_2011_2018 <- data.frame(Date = dates_2011_2018, Link = minutes_2011_2018, stringsAsFactors = FALSE)
 periods[["2011–2018"]] <- urls_2011_2018
-
 ############################################################
 # Period 2019–2024
 ############################################################
 # Fetch the 2019–2024 calendar page
 calendar_page <- read_html(paste0(base_url, "/monetarypolicy/fomccalendars.htm"))
-
 # Extract links
 minutes_links <- calendar_page %>%
   html_nodes("a") %>%
   html_attr("href") %>%
   grep("/monetarypolicy/fomcminutes", ., value = TRUE) %>%
   {ifelse(grepl("^http", .), ., paste0(base_url, .))}
-
 # Extract release dates
 release_nodes <- calendar_page %>% html_nodes(xpath = "//div[contains(@class, 'fomc-meeting__minutes')]")
 release_dates <- release_nodes %>%
@@ -194,7 +187,6 @@ release_dates <- release_nodes %>%
   str_extract("\\(Released [A-Za-z]+ \\d{1,2}, \\d{4}\\)") %>%
   str_remove_all("\\(Released |\\)") %>%
   na.omit()
-
 # Combine into a data frame
 if (length(minutes_links) == length(release_dates)) {
   urls_2019_2024 <- data.frame(Link = minutes_links, Date = release_dates, stringsAsFactors = FALSE)
@@ -206,19 +198,20 @@ if (length(minutes_links) == length(release_dates)) {
   )
 }
 periods[["2019–2024"]] <- urls_2019_2024
-
 # Merge All Periods into One Dataset
 Minutes_FED <- bind_rows(periods)
-
 # Print the final data frame
 print(Minutes_FED)
 colnames(Minutes_FED)<-c("Date","link")
 # Save the results
 write.xlsx(Minutes_FED, file = "FOMC Minutes links.xlsx")
 
-
+###          
 ######################################################################################### EXTRACT TEXT AND DATE FROM LINKS #########################################################################################
-####################################################### ECB Accounts --> Minutes #######################################################
+###
+############################################################
+# ECB Accounts --> Minutes 
+############################################################                   
 # Load the file with the links
 ECB_Minutes <- read_excel("ECB Minute links.xlsx")
 # Access each link in the data frame and extract text
@@ -230,7 +223,10 @@ colnames(Minutes_ECB)<- c("Date","Text")
 # Save the results
 write.csv(Minutes_ECB,file = "ECB Accounts.csv",row.names=FALSE)
 
-####################################################### ECB Decisions  #######################################################
+                   
+############################################################
+# ECB Decisions  
+############################################################
 # Load the file with the links 
 ECB_decisions <- read_excel("ECB Decision links.xlsx")
 # Access each link in the data frame and extract text
@@ -246,7 +242,10 @@ colnames(Decisions_ECB)<- c("Date","Text")
 # Save the results
 write.csv(Decisions_ECB,file = "ECB Decisions.csv",row.names=FALSE)
 
-####################################################### FED Minutes  #######################################################
+                              
+############################################################
+# FED Minutes  
+############################################################                           
 # Load the file with the links 
 FOMC_Minutes <- read_excel("FOMC Minutes links.xlsx")
 # Access each link in the data frame and extract text
@@ -259,7 +258,9 @@ colnames(Clean_FOMC_Minutes)<- c("Date","Text")
 write.csv(Clean_FOMC_Minutes,file = "FOMC Minutes.csv",row.names=FALSE
 
           
-####################################################### FED Statements --> Decisions  #######################################################          
+############################################################
+# FED Statements --> Decisions            
+############################################################
 # Load the file with the links 
 FOMC_Statements <- read_excel("FOMC Statements links.xlsx")
 # Access each link in the data frame and extract text
@@ -275,9 +276,12 @@ colnames(Clean_FOMC_Statements)<- c("Date","Text")
 #Save the results in a new file
 write.csv(Clean_FOMC_Statements,file = "FOMC Statements.csv",row.names = FALSE)
 
-
+###
 #########################################################################################  CREATE A DICTIONARY OF TERMS FOR HAWK-SCORE #########################################################################################
-####################################################### Modifiers #######################################################          
+###
+############################################################
+# Modifiers           
+############################################################
 
 high_modifiers <- c( "above", "accelerate", "accelerated", "accelerates", "accelerating", "added",
                      "augment", "augmented", "augmenting", "augments", "big","bigger", "bigger than estimated", 
@@ -396,7 +400,9 @@ negators <- c("anti", "aren t", "by no means",
 
 all_terms<- rbind(all_terms,wordlist2dataframe(negators,"Negator"))
 
-####################################################### HAWKISH keywords #######################################################
+############################################################
+# HAWKISH keywords 
+############################################################
 policy_hawk <- c("bank rate", "board member", "board members", "central bank", "central banks",
                  "committee member",  "committee members", "core rates", "deposit rates",
                  "deposit facility","euribor", "interbank interest rate",
@@ -495,7 +501,9 @@ other_hawk <- c("confidence", "housing", "housing market", "sentiment", "surplus
                 "vaccine", "vaccines", "vaccination", "vaccinations")
 all_terms<- rbind(all_terms,wordlist2dataframe(other_hawk, "Hawkish Keyword", topic = "Other"))
 
-####################################################### DOVISH Keywords #######################################################
+############################################################
+# DOVISH Keywords 
+############################################################
 
 policy_dove <- c("monetary easing", "monetary easing cycle", "monetary stimulus", "stimulus")
 all_terms<- rbind(all_terms,wordlist2dataframe(policy_dove, "Dovish Keyword", topic = "Policy"))
@@ -573,8 +581,13 @@ write.csv(fourgrams,file = "Fourgrams.csv", row.names=FALSE)
 write.csv(trigrams,file = "Trigrams.csv", row.names=FALSE)
 write.csv(bigrams,file = "Bigrams.csv", row.names=FALSE)
 
+
+###
 ######################################################################################### HAWK-SCORE CALCULATION #########################################################################################
+###                          
+############################################################
 # Load all the text files and dictionary classifications previously created
+############################################################
 Minutes_FED<-read.csv("FOMC Minutes.csv")
 Minutes_ECB<-read.csv("ECB Accounts.csv")
 Decisions_FED<-read.csv("FOMC Statements.csv")
@@ -589,8 +602,11 @@ Tri_grams<- Trigrams %>%
   mutate(term = str_replace_all(term, " ", "_"))
 Bi_grams<- Bigrams %>%
   mutate(term = str_replace_all(term, " ", "_"))
-   
-####################################################### Unify the date format #######################################################
+
+                           
+############################################################
+# Unify the date format 
+############################################################
 Minutes_FED<- Minutes_FED%>%
   mutate(Date = sapply(Date, standardize_date))
 Minutes_ECB <- Minutes_ECB%>%
@@ -600,8 +616,10 @@ Decisions_FED <- Decisions_FED%>%
 Decisions_ECB <- Decisions_ECB%>%
   mutate(Date = sapply(Date, standardize_date))
 
-####################################################### Clean the data and split into sentences  #######################################################
-
+                           
+############################################################
+#Clean the data and split into sentences  
+############################################################
 Sentences_minutes_FED <- sentenceSplit(Minutes_FED)%>% # Split the text to sentences 
   filter(nchar >=10 )%>% # Delete too short sentences
   mutate(Cleaned_Text = sapply(sentence, clean_text))%>% # clean the text with a function 
@@ -630,8 +648,9 @@ Sentences_decisions_ECB <- sentenceSplit(Decisions_ECB)%>%
   mutate(sentence_id = row_number()) %>%  
   ungroup()
 
-          
-######################################################################################### CHECKING FOR WORDS IN THE TERM LIST (DICTIONARY) #########################################################################################3
+###          
+######################################################################################### CHECKING FOR WORDS IN THE TERM LIST (DICTIONARY) #########################################################################################
+###                           
 #######################################################
 #CHECKING FOR FOURGRAMS 
 #######################################################
@@ -674,7 +693,9 @@ ECBM <- process_bigrams(ECBM, Bigrams, Bi_grams)
 FEDM <- process_bigrams(FEDM, Bigrams, Bi_grams)
 
           
-####################################################### RETAIN DATE, SENTENCE ID, SENTENCE, AND WORD COUNT PER SENTENCE #######################################################          
+############################################################
+# RETAIN DATE, SENTENCE ID, SENTENCE, AND WORD COUNT PER SENTENCE           
+############################################################
 Clean_ECBD <- ECBD%>%
   mutate(word_count = str_count(merged_sentence, "\\S+"))# create word count per sentence
 Clean_FEDD <- FEDD%>%
@@ -685,7 +706,9 @@ Clean_FEDM <- FEDM%>%
   mutate(word_count = str_count(merged_sentence, "\\S+"))# create word count per sentence
 
 
-####################################################### ASSIGN THE SCORE TO ALL MODIFIER AND KEYWORD COMBINATIONS #######################################################          
+############################################################
+# ASSIGN THE SCORE TO ALL MODIFIER AND KEYWORD COMBINATIONS           
+############################################################
 Scores_FEDD <-calculate_scores(Clean_FEDD, All_terms)
 Scores_FEDM <- calculate_scores(Clean_FEDM, All_terms)
 Scores_ECBD <- calculate_scores(Clean_ECBD, All_terms)
@@ -696,8 +719,23 @@ write.csv(Scores_ECBD, file = "Scores_ECBD.csv",row.names = FALSE)
 write.csv(Scores_ECBM, file = "Scores_ECBM.csv",row.names = FALSE)
 write.csv(Scores_FEDD, file = "Scores_FEDD.csv",row.names = FALSE)
 write.csv(Scores_FEDM, file = "Scores_FEDM.csv",row.names = FALSE)
+                           
+############################################################
+# CREATE TOTAL SCORES (Unstandardized and not per topic)  
+############################################################
+Unstandardized_ECBM<-calculate_final_score(Scores_ECBM)
+Unstandardized_ECBD<-calculate_final_score(Scores_ECBD)
+Unstandardized_FEDD<-calculate_final_score(Scores_FEDD)
+Unstandardized_FEDM<-calculate_final_score(Scores_FEDM)
+
+write.csv(Unstandardized_ECBM, file = "Unstandardized_ECBM.csv",row.names = FALSE)         
+write.csv(Unstandardized_ECBD, file = "Unstandardized_ECBD.csv",row.names = FALSE)   
+write.csv(Unstandardized_FEDD, file = "Unstandardized_FEDD.csv",row.names = FALSE)   
+write.csv(Unstandardized_FEDM, file = "Unstandardized_FEDM.csv",row.names = FALSE)   
           
-####################################################### CREATE TOTAL STANDARDIZED SCORES AND STANDARDIZED SCORES PER TOPIC #######################################################
+############################################################
+# CREATE TOTAL STANDARDIZED SCORES AND STANDARDIZED SCORES PER TOPIC 
+############################################################
 Final_score_ECBM<-standardized_score_and_topic(Scores_ECBM)
 Final_score_ECBD<-standardized_score_and_topic(Scores_ECBD)
 Final_score_FEDD<-standardized_score_and_topic(Scores_FEDD)
@@ -709,8 +747,9 @@ write.csv(Final_score_ECBD, file = "Final_score_ECBD.csv",row.names = FALSE)
 write.csv(Final_score_FEDD, file = "Final_score_FEDD.csv",row.names = FALSE)   
 write.csv(Final_score_FEDM, file = "Final_score_FEDM.csv",row.names = FALSE)   
 
-######################################################################################### CREATING TOPIC DUMMIES #########################################################################################
-################################ Create Dummy variables of most commonly discussed topics per document ################################        
+############################################################ 
+#CREATING TOPIC DUMMIES (MOST COMMON TOPIC DISCUSSED PER DOCUMENT)
+############################################################
 topics_ECBD_DUMMY <- most_common_topics_dummy(Scores_ECBD)
 topics_ECBM_DUMMY <- most_common_topics_dummy(Scores_ECBM)
 topics_FEDD_DUMMY <- most_common_topics_dummy(Scores_FEDD)
@@ -722,7 +761,9 @@ write.csv(topics_ECBM_DUMMY, file = "topics_ECBM_DUMMY.csv",row.names = FALSE)
 write.csv(topics_FEDD_DUMMY, file = "topics_FEDD_DUMMY.csv",row.names = FALSE)
 write.csv(topics_FEDM_DUMMY, file = "topics_FEDM_DUMMY.csv",row.names = FALSE)
 
-######################################################################################### GENERATE WORD COUNT PER DOCUMENT  #########################################################################################        
+############################################################
+# GENERATE WORD COUNT PER DOCUMENT          
+############################################################
 WCPD_ECBD<- process_word_count(Clean_ECBD)
 WCPD_ECBM<- process_word_count(Clean_ECBM)
 WCPD_FEDD<- process_word_count(Clean_FEDD)
@@ -734,7 +775,9 @@ write.csv(WCPD_ECBM, file = "WCPD_ECBM.csv",row.names = FALSE)
 write.csv(WCPD_FEDD, file = "WCPD_FEDD.csv",row.names = FALSE)
 write.csv(WCPD_FEDM, file = "WCPD_FEDM.csv",row.names = FALSE)
 
-######################################################################################### CREATE SCORES OF SENTIMENT AND UNCERTAINTY FROM TEXT #########################################################################################
+############################################################
+# CREATE SCORES OF SENTIMENT AND UNCERTAINTY FROM TEXT 
+############################################################
 sentiment_score_ECBD <- sentiment(Decisions_ECB)
 sentiment_score_ECBM <- sentiment(Minutes_ECB)
 sentiment_score_FEDD <- sentiment(Decisions_FED)
@@ -746,7 +789,9 @@ write.csv(sentiment_score_ECBM, file = "sentiment_score_ECBM.csv",row.names = FA
 write.csv(sentiment_score_FEDD, file = "sentiment_score_FEDD.csv",row.names = FALSE)
 write.csv(sentiment_score_FEDM, file = "sentiment_score_FEDM.csv",row.names = FALSE)
           
-######################################################################################### CREATE SCORES OF READABILITY  #########################################################################################
+############################################################
+# CREATE SCORES OF READABILITY  
+############################################################
 readability_ECBD<-my_readability(Decisions_ECB)
 readability_FEDD<-my_readability(Decisions_FED)
 readability_ECBM<-my_readability(Minutes_ECB)
