@@ -21,11 +21,18 @@ library(tidyr)
 library(SnowballC)
 library(wordcloud)
 library(RColorBrewer)
-
+###
 ######################################################################################### GATHER LINKS FROM FOMC DECISIONS AND MINUTES #########################################################################################
+###
 # Note: Links from ECB minutes and decisions were gathered manually and are provided in the Excel files ("ECB Decisions links" and "ECB Minutes links")
+
+###
 ####################################################### Save links to FOMC decisions #######################################################
-############################## Scrape FOMC Statements from 1994 to 2018  ##############################
+###
+############################## Scrape FOMC Statements 
+############################################################
+# Period 1994–2018
+############################################################
 decisions <- c()
 years <- c()
 #  Gather pages from 1994 until 2018
@@ -60,7 +67,10 @@ base_url <- "https://www.federalreserve.gov" # Define the base URL for the Feder
 decisions <- ifelse(grepl("^http", decisions), decisions, paste0(base_url, decisions))
 links <- data.frame(year = years, link = decisions, stringsAsFactors = FALSE) # save the links to a dataset
 
-############################## Scrape FOMC Statements from 2024 to 2018 ##############################
+
+############################################################
+# Period 2019-2024
+############################################################
 # Use the main webpage with all the links (open the link for more understanding of the structure)
 page_link1 <- paste0("https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm")
 # Read the HTML content of the specified page
@@ -77,12 +87,15 @@ statement_links <- ifelse(grepl("^http", statement_links), statement_links, past
 years <- sub(".*/monetary([0-9]{4}).*", "\\1", statement_links)
 links_df1 <- data.frame(year = years, link = statement_links, stringsAsFactors = FALSE)
 links_df1 <- links_df1[nrow(links_df1):1, ]
-## Merge the two periods and create an excel file 
+## Merge the two periods
 Statements <- rbind(links,links_df1)
+# Save the results
 write.xlsx(Statements, file = "FOMC Statements links.xlsx")
 
+###
 ####################################################### Save links to FOMC minutes #######################################################
-# Note: accessing the links for the minutes needs to be divided into several periods because of the difference in formatting
+###
+# Note: accessing the links for the minutes needs to be divided into several periods because of the difference in HTML formatting
 # Base URL
 base_url <- "https://www.federalreserve.gov"
 
@@ -194,14 +207,13 @@ if (length(minutes_links) == length(release_dates)) {
 }
 periods[["2019–2024"]] <- urls_2019_2024
 
-############################################################
 # Merge All Periods into One Dataset
-############################################################
 Minutes_FED <- bind_rows(periods)
 
 # Print the final data frame
 print(Minutes_FED)
 colnames(Minutes_FED)<-c("Date","link")
+# Save the results
 write.xlsx(Minutes_FED, file = "FOMC Minutes links.xlsx")
 
 
@@ -215,7 +227,7 @@ ECB_Minutes <- ECB_Minutes %>%
 # Create a data frame with the date and text
 Minutes_ECB <- cbind(date, ECB_Minutes$Text)
 colnames(Minutes_ECB)<- c("Date","Text")
-#### Create a file with the processed data
+# Save the results
 write.csv(Minutes_ECB,file = "ECB Accounts.csv",row.names=FALSE)
 
 ####################################################### ECB Decisions  #######################################################
@@ -231,7 +243,7 @@ dates <- as.data.frame(sapply(Text, function(text) str_extract(text, date_patter
 #### Create a dataframe with the date and text
 Decisions_ECB <- cbind(dates, ECB_decisions$Text)
 colnames(Decisions_ECB)<- c("Date","Text")
-#### Create a file with the processed data
+# Save the results
 write.csv(Decisions_ECB,file = "ECB Decisions.csv",row.names=FALSE)
 
 ####################################################### FED Minutes  #######################################################
@@ -266,6 +278,7 @@ write.csv(Clean_FOMC_Statements,file = "FOMC Statements.csv",row.names = FALSE)
 
 #########################################################################################  CREATE A DICTIONARY OF TERMS FOR HAWK-SCORE #########################################################################################
 ####################################################### Modifiers #######################################################          
+
 high_modifiers <- c( "above", "accelerate", "accelerated", "accelerates", "accelerating", "added",
                      "augment", "augmented", "augmenting", "augments", "big","bigger", "bigger than estimated", 
                      "bigger than expected", "bigger than usual","biggest", "boost", "boosted",
@@ -273,8 +286,8 @@ high_modifiers <- c( "above", "accelerate", "accelerated", "accelerates", "accel
                      "climb", "climbed", "climbing", "climbs", "elevate", "elevated", "elevates",
                      "elevating", "escalate", "escalated", "escalates", "escalating", "exceed", "exceeded",
                      "exceeding", "exceeds", "excessive","expand", "expanded", "expanding", "expands",
-                      "expansionary", "fast", "faster", "faster than estimated", "faster than expected",
-                      "faster than usual","fastest","further", "further than estimated", 
+                     "expansionary", "fast", "faster", "faster than estimated", "faster than expected",
+                     "faster than usual","fastest","further", "further than estimated", 
                      "further than expected", "further than usual","furthering", "gain", "gain", "go up",
                      "gaining", "gained", "grew", "grow", "growing", "grown", "grows", "hawk", "hawkish", 
                      "high","higher", "higher than estimated", "higher than expected", "higher than usual",
@@ -311,7 +324,7 @@ positive_modifiers <- c( "accommodate", "accommodated", "accommodates", "accommo
                          "looser than expected", "looser than usual","mitigate", "mitigated", "mitigates", "mitigating", 
                          "optimistic", "outperform","outperformed", "outperforming", "outperforms", "positive","recover", 
                          "recovered", "recovering", "recovers","reinforce", "reinforced", "reinforces", "reinforcing",
-                         "remain unchanged","restore", "restored", "restores", "restoring","satisfactory", "stabilise", "stabilised",
+                         "restore", "restored", "restores", "restoring","satisfactory", "stabilise", "stabilised",
                          "stabilises", "stabilising", "stabilize", "stabilized","stabilizes", "stabilizing", "stable",
                          "stimulate", "stimulated", "stimulates", "stimulating","stimulative", "stimulatory", "steady", 
                          "successful")
@@ -384,13 +397,12 @@ negators <- c("anti", "aren t", "by no means",
 all_terms<- rbind(all_terms,wordlist2dataframe(negators,"Negator"))
 
 ####################################################### HAWKISH keywords #######################################################
-
 policy_hawk <- c("bank rate", "board member", "board members", "central bank", "central banks",
                  "committee member",  "committee members", "core rates", "deposit rates",
                  "deposit facility","euribor", "interbank interest rate",
                  "interbank rate", "interbank rates", "interest rate", "interest rates",
                  "libor", "lombard rate", "main refinancing operations",
-                 "marginal standing facility","marginal lending facility", "market rates", "monetary conditions",
+                 "market rates", "monetary conditions",
                  "monetary policy", "monetary policy action", "monetary policy actions",
                  "monetary policy instrument", "monetary policy instruments",
                  "monetary policy stance", "monetary policy stances",
@@ -518,11 +530,13 @@ all_terms<- rbind(all_terms,wordlist2dataframe(other_dove, "Dovish Keyword", top
 
 neutral_terms <- c("all of the above", "at least", "best practice", "best practices",
                    "committee stresses that", "forward contracts", "greater transparency",
-                   "greater focus",
+                   "greater focus","remain unchanged",
                    "high frequency", "higher frequency", "high quality", "high yield",
                    "increasing weight", "more detail", "more timely", "more or less",
                    "rate of change", "rates of change")
+
 all_terms<- rbind(all_terms,wordlist2dataframe(neutral_terms, "Neutral Phrase"))
+
 # Initialize empty data frames for each type
 fourgrams <- data.frame(term = character(), category = character(), topic = character())
 trigrams <- data.frame(term = character(), category = character(), topic = character())
@@ -560,7 +574,7 @@ write.csv(trigrams,file = "Trigrams.csv", row.names=FALSE)
 write.csv(bigrams,file = "Bigrams.csv", row.names=FALSE)
 
 ######################################################################################### HAWK-SCORE CALCULATION #########################################################################################
-# Load all the text files and dictionary classifications
+# Load all the text files and dictionary classifications previously created
 Minutes_FED<-read.csv("FOMC Minutes.csv")
 Minutes_ECB<-read.csv("ECB Accounts.csv")
 Decisions_FED<-read.csv("FOMC Statements.csv")
@@ -587,29 +601,40 @@ Decisions_ECB <- Decisions_ECB%>%
   mutate(Date = sapply(Date, standardize_date))
 
 ####################################################### Clean the data and split into sentences  #######################################################
+
 Sentences_minutes_FED <- sentenceSplit(Minutes_FED)%>% # Split the text to sentences 
+  filter(nchar >=10 )%>% # Delete too short sentences
   mutate(Cleaned_Text = sapply(sentence, clean_text))%>% # clean the text with a function 
   group_by(Date) %>%
   mutate(sentence_id = row_number()) %>%  # assign every sentence a number
   ungroup()
-Sentences_minutes_ECB <- sentenceSplit(Minutes_ECB)%>% 
+
+Sentences_minutes_ECB <- sentenceSplit(Minutes_ECB)%>%
+  filter(nchar >=10 )%>% # Delete too short sentences
   mutate(Cleaned_Text = sapply(sentence, clean_text))%>%
   group_by(Date) %>%
   mutate(sentence_id = row_number()) %>%  
   ungroup()
-Sentences_decisions_FED <- sentenceSplit(Decisions_FED)%>% 
+
+Sentences_decisions_FED <- sentenceSplit(Decisions_FED)%>%
+  filter(nchar >=10 )%>% # Delete too short sentences
   mutate(Cleaned_Text = sapply(sentence, clean_text))%>%
   group_by(Date) %>%
   mutate(sentence_id = row_number()) %>%  
   ungroup()
+
 Sentences_decisions_ECB <- sentenceSplit(Decisions_ECB)%>% 
+  filter(nchar >=10 )%>% # Delete too short sentences
   mutate(Cleaned_Text = sapply(sentence, clean_text))%>%
   group_by(Date) %>%
   mutate(sentence_id = row_number()) %>%  
   ungroup()
+
           
 ######################################################################################### CHECKING FOR WORDS IN THE TERM LIST (DICTIONARY) #########################################################################################3
-####################################################### CHECKING FOR FOURGRAMS #######################################################
+#######################################################
+#CHECKING FOR FOURGRAMS 
+#######################################################
 ##### Decisions
 #ECB
 ECBD <- process_fourgrams(Sentences_decisions_ECB, Fourgrams, Four_grams)
@@ -621,7 +646,9 @@ ECBM <- process_fourgrams(Sentences_minutes_ECB, Fourgrams, Four_grams)
 # FED
 FEDM <- process_fourgrams(Sentences_minutes_FED, Fourgrams, Four_grams)
 
-####################################################### CHECKING FOR TRIGRAMS #######################################################
+#######################################################
+#CHECKING FOR TRIGRAMS 
+#######################################################
 ##### Decisions
 ECBD <- process_trigrams(ECBD, Trigrams, Tri_grams)
 # FED
@@ -632,7 +659,9 @@ ECBM <- process_trigrams(ECBM, Trigrams, Tri_grams)
 # FED
 FEDM <- process_trigrams(FEDM, Trigrams, Tri_grams)
 
-####################################################### CHECKING FOR BIGRAMS #######################################################
+#######################################################
+#CHECKING FOR BIGRAMS 
+#######################################################
 ##### Decisions
 #ECB
 ECBD <- process_bigrams(ECBD, Bigrams, Bi_grams)
