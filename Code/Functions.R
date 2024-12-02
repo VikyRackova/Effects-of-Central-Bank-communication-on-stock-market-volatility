@@ -328,59 +328,76 @@ calculate_scores <- function(Clean_file, All_terms) {
   
   # Step 2: Identify categories
   keywords <- Term %>% filter(category %in% c("Hawkish Keyword", "Dovish Keyword"))
-  modifiers <- Term %>% filter(category %in% c("High modifier", "Low modifier", "Positive modifier", "Negative modifier","Neutral Phrase"))
+  modifiers <- Term %>% filter(category %in% c("High modifier", "Low modifier", "Positive modifier", "Negative modifier", "Neutral Phrase"))
   negators <- Term %>% filter(category == "Negator")
-  #neutrals <- Term %>% filter(category == "Neutral Phrase")
   
   # Step 3: Calculate distances between modifiers and keywords
   Score_with_distances <- modifiers %>%
-    left_join(keywords, by = c("Date", "sentence_id","word_count"), suffix = c("_modifier", "_keyword"), relationship = "many-to-many") %>%
+    left_join(keywords, by = c("Date", "sentence_id", "word_count"), suffix = c("_modifier", "_keyword"), relationship = "many-to-many") %>%
+    left_join(
+      negators %>% 
+        rename_with(~ paste0(., "_negator"), 
+                    .cols = -c(Date, sentence_id, word_count)), # Exclude join keys
+      by = c("Date", "sentence_id", "word_count"), 
+      relationship = "many-to-many"
+    ) %>%
     mutate(distance = abs(order_modifier - order_keyword)) %>%
+    mutate(distance_negator = abs(order_negator - order_modifier)) %>%
     group_by(Date, sentence_id, word_modifier) %>%
-    filter(distance == min(distance) | (distance == min(distance) & order_keyword < order_modifier)) %>%
+    filter(
+      is.na(order_negator) |
+        is.na(order_keyword) |  # Include rows with no keyword
+        distance == min(distance) |  # Include rows with the closest distance
+        (distance == min(distance) & order_keyword < order_modifier) # Resolve ties
+    ) %>%
     ungroup()
   
-  # Step 4: Assign scores
+  # Step 4: Assign scores and handle cases without keywords
   Score <- Score_with_distances %>%
     group_by(Date, sentence_id) %>%
     mutate(
       has_keyword = any(category_keyword %in% c("Hawkish Keyword", "Dovish Keyword")),
-      #is_neutral = category_keyword == "Neutral Phrase",
-      negator_in_front = lag(word_modifier) %in% negators$word & lag(order_modifier) == order_modifier - 1
-    ) %>%
+      negator_in_front = if_else(
+        !is.na(distance_negator) & distance_negator == 1 & order_negator < order_modifier,
+        TRUE,
+        FALSE
+      )
+    ) %>% # End mutate block
     ungroup() %>%
-    mutate(score = case_when(
-      # Neutral phrases score zero
-      #is_neutral ~ 0,
-      category_modifier == "Neutral Phrase" & category_keyword == "Hawkish Keyword" ~ 0,
-      category_modifier == "Neutral Phrase" & category_keyword == "Dovish Keyword" ~ 0,
-      
-      # No keywords but modifiers are present
-      !has_keyword & category_modifier == "High modifier" ~ 1,
-      !has_keyword & category_modifier == "Positive modifier" ~ 1,
-      !has_keyword & category_modifier == "Low modifier" ~ -1,
-      !has_keyword & category_modifier == "Negative modifier" ~ -1,
-      
-      # Modifiers and keywords combinations
-      category_modifier == "High modifier" & category_keyword == "Hawkish Keyword" ~ 1,
-      category_modifier == "High modifier" & category_keyword == "Dovish Keyword" ~ -1,
-      category_modifier == "Low modifier" & category_keyword == "Hawkish Keyword" ~ -1,
-      category_modifier == "Low modifier" & category_keyword == "Dovish Keyword" ~ 1,
-      
-      category_modifier == "Positive modifier" & category_keyword == "Hawkish Keyword" & !topic_keyword %in% c("Prices", "Policy") ~ 1,
-      category_modifier == "Positive modifier" & category_keyword == "Dovish Keyword" & !topic_keyword %in% c("Prices", "Policy") ~ -1,
-      category_modifier == "Positive modifier" & category_keyword == "Dovish Keyword" & topic_keyword == "Prices" ~ 1,
-      category_modifier == "Positive modifier" & topic_keyword == "Policy" ~ -1,
-      category_modifier == "Positive modifier" & category_keyword == "Hawkish Keyword" & topic_keyword == "Prices" ~ -1,
-      
-      category_modifier == "Negative modifier" & category_keyword == "Hawkish Keyword" & !topic_keyword %in% c("Prices", "Policy") ~ -1,
-      category_modifier == "Negative modifier" & category_keyword == "Dovish Keyword" & !topic_keyword %in% c("Prices", "Policy") ~ 1,
-      category_modifier == "Negative modifier" & category_keyword == "Dovish Keyword" & topic_keyword == "Prices" ~ -1,
-      category_modifier == "Negative modifier" & category_keyword == "Hawkish Keyword" & topic_keyword == "Prices" ~ 1,
-      category_modifier == "Negative modifier" & topic_keyword == "Policy" ~ 1,
-      TRUE ~ 0
-    )) %>%
-    
+    mutate(
+      category_keyword = if_else(!has_keyword, NA_character_, category_keyword),
+      word_keyword = if_else(!has_keyword, NA_character_, word_keyword),
+      score = case_when(
+        # Neutral phrases score zero
+        category_modifier == "Neutral Phrase" & category_keyword == "Hawkish Keyword" ~ 0,
+        category_modifier == "Neutral Phrase" & category_keyword == "Dovish Keyword" ~ 0,
+        
+        # No keywords but modifiers are present
+        !has_keyword  & category_modifier == "High modifier" ~ 1,
+        !has_keyword  & category_modifier == "Positive modifier" ~ 1,
+        !has_keyword  & category_modifier == "Low modifier" ~ -1,
+        !has_keyword  & category_modifier == "Negative modifier" ~ -1,
+        
+        # Modifiers and keywords combinations
+        category_modifier == "High modifier" & category_keyword == "Hawkish Keyword" ~ 1,
+        category_modifier == "High modifier" & category_keyword == "Dovish Keyword" ~ -1,
+        category_modifier == "Low modifier" & category_keyword == "Hawkish Keyword" ~ -1,
+        category_modifier == "Low modifier" & category_keyword == "Dovish Keyword" ~ 1,
+        
+        category_modifier == "Positive modifier" & category_keyword == "Hawkish Keyword" & !topic_keyword %in% c("Prices", "Policy") ~ 1,
+        category_modifier == "Positive modifier" & category_keyword == "Dovish Keyword" & !topic_keyword %in% c("Prices", "Policy") ~ -1,
+        category_modifier == "Positive modifier" & category_keyword == "Dovish Keyword" & topic_keyword == "Prices" ~ 1,
+        category_modifier == "Positive modifier" & topic_keyword == "Policy" ~ -1,
+        category_modifier == "Positive modifier" & category_keyword == "Hawkish Keyword" & topic_keyword == "Prices" ~ -1,
+        
+        category_modifier == "Negative modifier" & category_keyword == "Hawkish Keyword" & !topic_keyword %in% c("Prices", "Policy") ~ -1,
+        category_modifier == "Negative modifier" & category_keyword == "Dovish Keyword" & !topic_keyword %in% c("Prices", "Policy") ~ 1,
+        category_modifier == "Negative modifier" & category_keyword == "Dovish Keyword" & topic_keyword == "Prices" ~ -1,
+        category_modifier == "Negative modifier" & category_keyword == "Hawkish Keyword" & topic_keyword == "Prices" ~ 1,
+        category_modifier == "Negative modifier" & topic_keyword == "Policy" ~ 1,
+        TRUE ~ 0
+      )
+    ) %>%
     # Step 5: Reverse score if negator is in front
     mutate(score = if_else(negator_in_front, -score, score))
   
