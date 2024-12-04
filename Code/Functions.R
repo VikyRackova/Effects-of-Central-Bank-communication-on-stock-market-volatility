@@ -367,6 +367,7 @@ calculate_scores <- function(Clean_file, All_terms) {
     mutate(
       category_keyword = if_else(!has_keyword, NA_character_, category_keyword),
       word_keyword = if_else(!has_keyword, NA_character_, word_keyword),
+      topic_keyword=if_else(!has_keyword, "None", topic_keyword),
       score = case_when(
         # Neutral phrases score zero
         category_modifier == "Neutral Phrase" & category_keyword == "Hawkish Keyword" ~ 0,
@@ -451,6 +452,7 @@ standardized_score_and_topic <- function(data) {
       mutate(sentence_score = sum(score, na.rm = TRUE)) %>%  # Total score per sentence
       ungroup()
   }
+  
   # Step 2: Count sentences per document
   count_sentences <- function(data) {
     data %>%
@@ -460,6 +462,7 @@ standardized_score_and_topic <- function(data) {
         .groups = 'drop'
       )
   }
+  
   # Step 3: Calculate topic fractions
   calculate_topic_fractions <- function(sentence_data, sentence_count) {
     sentence_data %>%
@@ -481,6 +484,7 @@ standardized_score_and_topic <- function(data) {
       dplyr::select(Date, topic_keyword, topic_fraction) %>%
       distinct()
   }
+  
   # Step 4: Calculate document scores
   calculate_document_scores <- function(sentence_data, sentence_count) {
     sentence_data %>%
@@ -493,6 +497,7 @@ standardized_score_and_topic <- function(data) {
       ) %>%
       mutate(Standardized_score = (total_document_score - mean(total_document_score)) / sd(total_document_score))
   }
+  
   # Step 5: Calculate standardized topic scores
   calculate_topic_scores <- function(topic_fraction, document_score) {
     topic_fraction %>%
@@ -505,6 +510,7 @@ standardized_score_and_topic <- function(data) {
         values_fill = 0  # Fill missing values with 0
       )
   }
+  
   # Main process
   sentence_scores <- calculate_sentence_scores(data)
   sentence_count <- count_sentences(data)
