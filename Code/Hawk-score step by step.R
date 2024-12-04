@@ -215,11 +215,9 @@ write.xlsx(Minutes_FED, file = "FOMC Minutes links.xlsx")
 # Load the file with the links
 ECB_Minutes <- read_excel("ECB Minute links.xlsx")
 # Access each link in the data frame and extract text
-ECB_Minutes <- ECB_Minutes %>%
-  mutate(Text = sapply(link, extract_text_ECB)) 
-# Create a data frame with the date and text
-Minutes_ECB <- cbind(date, ECB_Minutes$Text)
-colnames(Minutes_ECB)<- c("Date","Text")
+Minutes_ECB <- ECB_Minutes %>%
+  mutate(Text = sapply(link, extract_text_ECB))%>%
+  dplyr:: select(Date, Text)
 # Save the results
 write.csv(Minutes_ECB,file = "ECB Accounts.csv",row.names=FALSE)
 
@@ -231,14 +229,8 @@ write.csv(Minutes_ECB,file = "ECB Accounts.csv",row.names=FALSE)
 ECB_decisions <- read_excel("ECB Decision links.xlsx")
 # Access each link in the data frame and extract text
 ECB_decisions <- ECB_decisions %>%
-  mutate(Text = sapply(link, extract_text_ECB)) 
-# Extract precise date
-Text <- sapply(ECB_decisions$link, extract_text_for_date)
-date_pattern <- "\\b(\\d{1,2}(?:-\\d{1,2})? [A-Za-z]+ \\d{4})|([A-Za-z]+ \\d{1,2}, \\d{4})\\b"
-dates <- as.data.frame(sapply(Text, function(text) str_extract(text, date_pattern)))
-#### Create a dataframe with the date and text
-Decisions_ECB <- cbind(dates, ECB_decisions$Text)
-colnames(Decisions_ECB)<- c("Date","Text")
+  mutate(Text = sapply(link, extract_text_ECB))%>%
+  dplyr:: select(Date, Text)
 # Save the results
 write.csv(Decisions_ECB,file = "ECB Decisions.csv",row.names=FALSE)
 
