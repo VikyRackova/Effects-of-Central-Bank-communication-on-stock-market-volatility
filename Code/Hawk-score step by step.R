@@ -290,7 +290,7 @@ high_modifiers <- c( "above", "accelerate", "accelerated", "accelerates", "accel
                      "highest", "hike", "hikes", "hiking", "impulse", "impulsed", "impulses", "impulsing",
                      "increase", "increased", "increases", "increasing", "inflationary", "large",
                      "larger", "larger than estimated", "larger than expected", "larger than usual",
-                     "largest", "lift", "lifted", "lifting","lifts", "maximum","more", "more than estimated", 
+                     "largest", "lift", "lifted", "lifting","lifts", "maintain", "maximum","more", "more than estimated", 
                      "more than expected", "more than usual","mount", "mounted", "mounting", "mounts", "peak",
                      "peaked", "peaking", "peaks", "pick up", "picked up", "picking up", "picks up", "raise",
                      "raised", "raises", "raising", "ramp", "ramped", "ramping", "ramps", "rapid", "rise",
@@ -308,12 +308,12 @@ high_modifiers <- c( "above", "accelerate", "accelerated", "accelerates", "accel
 
 all_terms<- wordlist2dataframe(high_modifiers,"High modifier")
 
+
 positive_modifiers <- c( "accommodate", "accommodated", "accommodates", "accommodating","benign", "best",
                          "better", "better than estimated", "better than expected", "better than usual",
                          "calm", "calmed","calmer", "calmer than estimated", "calmer than expected", "calmer than usual",
                          "calming", "calms","depreciation", "depreciate", "depreciated", "depreciating", "depreciates",
                          "dynamic", "ease", "eases", "eased", "easing", "encouraging","excellent", "expansion", "expansionary", 
-                         "expansive","favorable", "favourable", "firmer", "good", "great","greater", "greater than estimated", 
                          "greater than expected", "greater than usual","greatest","healthier", "healthier than estimated", 
                          "healthier than expected", "healthier than usual","improve", "improved", "improves", "improving",
                          "loose", "loosen", "loosened", "loosening", "loosens","looser", "looser than estimated", 
@@ -342,7 +342,7 @@ low_modifiers<- c( "accommodate", "accommodating", "accommodative", "below", "bo
                    "flattening", "flattens", "hopeful","lagged", "lagging", "lagged behind", "lagging behind", "least",
                    "less", "less than estimated", "less than expected", "less than usual","lost", "losing", "slowdown", 
                    "low","lower", "lower than estimated", "lower than expected", "lower than usual","lowered", "lowering",
-                   "lowers", "lowest", "mild","minimal", "minimum", "minor", "moderate", "moderated", "moderates", "moderating",
+                   "lowers", "lowest", "mild","minimal","minor", "moderate", "moderated", "moderates", "moderating",
                    "modest", "negative", "recede", "receding", "recedes","recessionary", "reduce", "reduced",
                    "reduces", "reducing", "reduction", "reductions","reversal of increases", "reversed increases", "sank", 
                    "shorten", "shortened","shortening", "shortens", "shrink", "shrinking", "shrinks", "shrunk", "shrunken", 
@@ -395,9 +395,9 @@ all_terms<- rbind(all_terms,wordlist2dataframe(negators,"Negator"))
 ############################################################
 # HAWKISH keywords 
 ############################################################
-policy_hawk <- c("bank rate", "board member", "board members", "central bank", "central banks",
-                 "committee member",  "committee members", "core rates", "deposit rates",
-                 "deposit facility","euribor", "interbank interest rate",
+policy_hawk <- c("bank rate", "board member", "board members", "central bank", "central banks", "committee",
+                 "committee member",  "committee members", "core rates", "deposit rates","deposit rate", "discount rate",
+                 "deposit facility","euribor", "interbank interest rate", "lending facility", "funds rate",
                  "interbank rate", "interbank rates", "interest rate", "interest rates",
                  "libor", "lombard rate", "main refinancing operations",
                  "market rates", "monetary conditions",
@@ -409,9 +409,9 @@ policy_hawk <- c("bank rate", "board member", "board members", "central bank", "
                  "policy action", "policy actions", "policy decision", "policy decisions",
                  "policy instrument", "policy instruments", "policy stance", "policy stances",
                  "policy repo rate", "policy rate", "policy rates",
-                 "pribor", "rates",
-                 "repo rate", "repo rates", "reserve bank", "reverse repo rate", "reverse repo rates",
-                 "selic rate","swap rates")
+                 "pribor","operations", "rate", "rates","refinancing",
+                 "repo rate", "repo rates", "reserve", "reserve bank", "reserve positions", "reverse repo rate", "reverse repo rates",
+                 "selic rate","swap rates", "stance")
 all_terms<- rbind(all_terms,wordlist2dataframe(policy_hawk, "Hawkish Keyword", topic = "Policy"))
 
 growth_hawk <- c("activity", "aggregate demand", "capacity utilisation", "capacity utilization",
@@ -420,7 +420,7 @@ growth_hawk <- c("activity", "aggregate demand", "capacity utilisation", "capaci
                  "demand", "demand side", "disposable income",
                  "domestic demand", "domestic economy", "domestic growth",
                  "economic", "economic activity", "economic conditions",
-                 "economic development", "economic growth", "economic output",
+                 "economic development","economic expnasion","economic growth", "economic output",
                  "economic recovery", "employment",
                  "employment growth", "expenditure", "expenditure growth",
                  "growth", "growth outlook", "growth expectations",
@@ -468,7 +468,7 @@ finance_hawk <- c("asset price", "asset prices",
                   "financial sector", "financial services", "financial system", "financial systems",
                   "foreign currency", "foreign currencies", "foreign exchange",
                   "global financial", "investors", "lending", "liquidity", "liquidity conditions",
-                  "loan", "securities", "us dollar")
+                  "loan","participants" ,"securities", "us dollar")
 all_terms<- rbind(all_terms,wordlist2dataframe(finance_hawk, "Hawkish Keyword", topic = "Finance"))
 
 global_hawk <- c("advanced country", "advanced countries", "advanced economy", "advanced economies",
@@ -528,7 +528,7 @@ other_dove <- c("coronavirus", "covid", "covid19", "covid 19", "deficit",
                 "uncertainty", "vat rates", "variance", "volatility")
 all_terms<- rbind(all_terms,wordlist2dataframe(other_dove, "Dovish Keyword", topic = "Other"))
 
-neutral_terms <- c("all of the above", "at least", "best practice", "best practices",
+neutral_terms <- c("all of above", "at least", "best practice", "best practices",
                    "committee stresses that", "forward contracts", "greater transparency",
                    "greater focus","remain unchanged",
                    "high frequency", "higher frequency", "high quality", "high yield",
@@ -536,7 +536,7 @@ neutral_terms <- c("all of the above", "at least", "best practice", "best practi
                    "rate of change", "rates of change")
 
 all_terms<- rbind(all_terms,wordlist2dataframe(neutral_terms, "Neutral Phrase"))
-
+          
 # Initialize empty data frames for each type
 fourgrams <- data.frame(term = character(), category = character(), topic = character())
 trigrams <- data.frame(term = character(), category = character(), topic = character())
@@ -739,20 +739,6 @@ write.csv(Final_score_ECBD, file = "Final_score_ECBD.csv",row.names = FALSE)
 write.csv(Final_score_FEDD, file = "Final_score_FEDD.csv",row.names = FALSE)   
 write.csv(Final_score_FEDM, file = "Final_score_FEDM.csv",row.names = FALSE)   
 
-############################################################ 
-#CREATING TOPIC DUMMIES (MOST COMMON TOPIC DISCUSSED PER DOCUMENT)
-############################################################
-topics_ECBD_DUMMY <- most_common_topics_dummy(Scores_ECBD)
-topics_ECBM_DUMMY <- most_common_topics_dummy(Scores_ECBM)
-topics_FEDD_DUMMY <- most_common_topics_dummy(Scores_FEDD)
-topics_FEDM_DUMMY <- most_common_topics_dummy(Scores_FEDM)
-
-#Save the results               
-write.csv(topics_ECBD_DUMMY, file = "topics_ECBD_DUMMY.csv",row.names = FALSE)
-write.csv(topics_ECBM_DUMMY, file = "topics_ECBM_DUMMY.csv",row.names = FALSE)
-write.csv(topics_FEDD_DUMMY, file = "topics_FEDD_DUMMY.csv",row.names = FALSE)
-write.csv(topics_FEDM_DUMMY, file = "topics_FEDM_DUMMY.csv",row.names = FALSE)
-
 ############################################################
 # GENERATE WORD COUNT PER DOCUMENT          
 ############################################################
@@ -793,3 +779,15 @@ write.csv(readability_ECBD, file = "readability_ECBD.csv",row.names = FALSE)
 write.csv(readability_ECBM, file = "readability_ECBM.csv",row.names = FALSE)
 write.csv(readability_FEDD, file = "readability_FEDD.csv",row.names = FALSE)
 write.csv(readability_FEDM, file = "readability_FEDM.csv",row.names = FALSE)
+                           
+############################################################
+# Visualize most common words  
+############################################################
+All_scores<- rbind(Scores_ECBD,Scores_ECBM,Scores_FEDD,Scores_FEDM)
+Wordcloud_ECBD <- create_wordcloud_per_topic (Scores_ECBD,"ECB Decisions | Topic:")
+Wordcloud_ECBM <- create_wordcloud_per_topic (Scores_ECBM,"ECB Accounts | Topic:")
+Wordcloud_FEDD <- create_wordcloud_per_topic (Scores_FEDD,"FOMC Statements | Topic:")
+Wordcloud_FEDM <- create_wordcloud_per_topic (Scores_FEDM,"FOMC Minutes | Topic:")
+
+TOTAL_WORDCLOUD <- create_wordcloud_per_topic(All_scores,"Topic:")
+
