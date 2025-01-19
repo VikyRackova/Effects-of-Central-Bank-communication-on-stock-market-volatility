@@ -173,7 +173,7 @@ standardize_date <- function(date_string) {
 ############################################################
 # Function to clean text to only lowercase words without punctuation
 ############################################################
-clean_text <- function(text) {
+ clean_text <- function(text) {
   # Convert to lowercase
   text <- tolower(text)
   # Remove all punctuation except words, numbers, and spaces
@@ -182,7 +182,12 @@ clean_text <- function(text) {
   text <- gsub("[0-9]+", " ", text)
   # Replace multiple spaces with a single space
   text <- str_squish(text)
-    return(text)
+  # Split text into words
+  words <- unlist(strsplit(text, " "))
+  # Recombine words into a single string
+  text <- paste(words, collapse = " ")
+  # Return the cleaned text
+  return(text)
 }
 
 
@@ -217,7 +222,6 @@ sentenceSplit <- function(text_df, extra_dividers = c(";", ":","--")) {
   sentence_df$nchar <- nchar(sentence_df$sentence)
   return(sentence_df)
 }
-
 
 ############################################################
 # Function to process Fourgrams
@@ -343,12 +347,12 @@ calculate_scores <- function(Clean_file, All_terms) {
     ) %>%
     mutate(distance = abs(order_modifier - order_keyword)) %>%
     mutate(distance_negator = abs(order_negator - order_modifier)) %>%
-    group_by(Date, sentence_id, word_modifier) %>%
+    group_by(Date, sentence_id, word_keyword) %>%
     filter(
       is.na(order_negator) |
         is.na(order_keyword) |  # Include rows with no keyword
         distance == min(distance) |  # Include rows with the closest distance
-        (distance == min(distance) & order_keyword < order_modifier) # Resolve ties
+        (distance == min(distance) & order_keyword > order_modifier) # Resolve ties
     ) %>%
     ungroup()
   
@@ -365,19 +369,11 @@ calculate_scores <- function(Clean_file, All_terms) {
     ) %>% # End mutate block
     ungroup() %>%
     mutate(
-      category_keyword = if_else(!has_keyword, NA_character_, category_keyword),
       word_keyword = if_else(!has_keyword, NA_character_, word_keyword),
-      topic_keyword=if_else(!has_keyword, "None", topic_keyword),
       score = case_when(
         # Neutral phrases score zero
         category_modifier == "Neutral Phrase" & category_keyword == "Hawkish Keyword" ~ 0,
         category_modifier == "Neutral Phrase" & category_keyword == "Dovish Keyword" ~ 0,
-        
-        # No keywords but modifiers are present
-        !has_keyword  & category_modifier == "High modifier" ~ 1,
-        !has_keyword  & category_modifier == "Positive modifier" ~ 1,
-        !has_keyword  & category_modifier == "Low modifier" ~ -1,
-        !has_keyword  & category_modifier == "Negative modifier" ~ -1,
         
         # Modifiers and keywords combinations
         category_modifier == "High modifier" & category_keyword == "Hawkish Keyword" ~ 1,
@@ -400,10 +396,12 @@ calculate_scores <- function(Clean_file, All_terms) {
       )
     ) %>%
     # Step 5: Reverse score if negator is in front
-    mutate(score = if_else(negator_in_front, -score, score))
+    mutate(score = if_else(negator_in_front, -score, score))%>%
+    filter(!is.na(word_keyword) & !is.na(category_keyword))
   
   return(Score)
 }
+
 
 ############################################################
 # Function to calculate a score per document (not standardized and not per topic)
@@ -433,7 +431,6 @@ calculate_final_score <- function(data) {
     )
   return(total_scores)
 }
-
 
 ############################################################
 # Function to calculate a standardized score per document and per topic
@@ -521,44 +518,8 @@ standardized_score_and_topic <- function(data) {
   return(standardized_topic_scores)
 }
 
-
-
 ############################################################
-# Function to assing the most commonly discussed topic per document, dummy variable creation
-############################################################
-most_common_topics_dummy <- function(data) {
-  # Step 1: Group by Date and topic_keyword, and summarize the count
-  summarized_data <- data %>%
-    group_by(Date, topic_keyword) %>%
-    summarize(count = n(), .groups = 'drop')
-  
-  # Step 2: Filter for the most common topic(s) per Date
-  most_common <- summarized_data %>%
-    group_by(Date) %>%
-    filter(count == max(count)) %>%
-    ungroup()
-  
-  # Step 3: Resolve ties by randomly selecting one topic per Date
-  most_common <- most_common %>%
-    group_by(Date) %>%
-    slice_sample(n = 1) %>%  # Randomly select one row per Date
-    ungroup()
-  
-  # Step 4: Create dummy variables for `topic_keyword`
-  most_common$topic_keyword <- as.factor(most_common$topic_keyword)
-  topic_dummies <- model.matrix(~ topic_keyword - 1, data = most_common)
-  
-  # Step 5: Add the dummy variables back to the most_common data frame
-  result <- cbind(most_common, as.data.frame(topic_dummies))
-  
-  # Return the updated data frame
-  return(result)
-}
-
-
-
-############################################################
-# Function to retain word count per document from sentence word counts
+# Function to generate document word count from sentence word count
 ############################################################
 process_word_count <- function(data) {
   data %>%
@@ -568,25 +529,41 @@ process_word_count <- function(data) {
     dplyr::select(Date, Document_word_count)
 }
 
-
 ############################################################
 # Function to calculate sentiment and uncertainty score from text
 ############################################################
 sentiment <- function(data) {
-  word_classification <- data %>%
-    mutate(Text = tolower(Text)) %>%  # Convert text to lowercase
-    unnest_tokens(word, Text) %>%
+  # Aggregate sentences into documents by Date
+  document_data <- data %>%
+    group_by(Date) %>%
+    summarize(
+      Cleaned_Text = paste(Cleaned_Text, collapse = " "), # Combine all sentences into a single document
+      .groups = "drop"
+    )
+  
+  # Create word count per document
+  word_count <- document_data %>%
+    mutate(word_count = str_count(Cleaned_Text, "\\S+")) %>%
+    dplyr::select(Date, word_count) # Keep only relevant columns
+  
+  # Classify words and calculate counts per sentiment
+  word_classification <- document_data %>%
+    unnest_tokens(word, Cleaned_Text) %>%
     inner_join(get_sentiments("loughran"), by = "word", relationship = "many-to-many") %>%
     group_by(Date, sentiment) %>%
     summarize(count = n(), .groups = "drop") %>%
     tidyr::pivot_wider(names_from = sentiment, values_from = count, values_fill = list(count = 0))
-  sentiment_score<- word_classification%>%
-    mutate(rowsum = positive + negative + uncertainty + constraining + litigious + superfluous)%>%
-    mutate(Sentiment_score = ((positive-negative)/rowsum))%>%
-    mutate(Standardized_sentiment_score = (Sentiment_score - mean(Sentiment_score)/sd(Sentiment_score)))%>%
-    mutate(Uncertainty_score = (uncertainty/rowsum))%>%
-    mutate(Standardized_uncertainty_score = (Uncertainty_score - mean(Uncertainty_score)/sd(Uncertainty_score)))%>%
-    dplyr::select(Date,Standardized_sentiment_score, Standardized_uncertainty_score)
+  
+  # Combine with word count and calculate sentiment scores
+  sentiment_score <- word_classification %>%
+    left_join(word_count, by = "Date") %>%
+    mutate(
+      Sentiment_score = (positive - negative) / word_count,
+      Standardized_sentiment_score = (Sentiment_score - mean(Sentiment_score, na.rm = TRUE)) / sd(Sentiment_score, na.rm = TRUE),
+      Uncertainty_score = uncertainty / word_count,
+      Standardized_uncertainty_score = (Uncertainty_score - mean(Uncertainty_score, na.rm = TRUE)) / sd(Uncertainty_score, na.rm = TRUE)
+    ) %>%
+    dplyr::select(Date, Standardized_sentiment_score, Standardized_uncertainty_score)
   
   return(sentiment_score)
 }
@@ -656,4 +633,134 @@ my_readability <- function (data){
   ungroup()
 }
 
+############################################################
+# Function to calculate summary statistics
+############################################################
 
+calculate_summary <- function(volatility) {
+     summarystatistics<- c( Mean = mean(volatility, na.rm = TRUE),
+      Standard_deviation = sd(volatility, na.rm = TRUE),
+      Minimum = min(volatility, na.rm = TRUE),
+      Maximum = max(volatility, na.rm = TRUE)
+     )
+     return(summarystatistics)
+}
+
+############################################################
+# Function for topic fractions
+############################################################
+
+topics <- function(data) {
+  # Step 1: Calculate sentence-level scores
+  calculate_sentence_scores <- function(data) {
+    data %>%
+      group_by(Date, sentence_id, topic_keyword) %>%
+      summarise(
+        word_count = first(word_count),  # Retain word count per sentence
+        score = sum(score, na.rm = TRUE) / word_count,  # Average score per topic per sentence
+        .groups = 'drop'
+      ) %>%
+      group_by(Date, sentence_id) %>%
+      mutate(sentence_score = sum(score, na.rm = TRUE)) %>%  # Total score per sentence
+      ungroup()
+  }
+  
+  # Step 2: Count sentences per document
+  count_sentences <- function(data) {
+    data %>%
+      group_by(Date) %>%
+      summarise(
+        num_sentences = n_distinct(sentence_id),  # Count unique sentence IDs
+        .groups = 'drop'
+      )
+  }
+  
+  total_documents <- length(unique(data$Date))  # Replace `Date` with your document identifier column
+  
+  # Step 3: Calculate topic fractions
+  calculate_topic_fractions <- function(sentence_data, sentence_count) {
+    sentence_data %>%
+      left_join(sentence_count, by = "Date") %>%
+      group_by(Date, sentence_id) %>%
+      mutate(num_topics_per_sentence = n_distinct(topic_keyword)) %>%
+      ungroup() %>%
+      group_by(Date, topic_keyword) %>%
+      mutate(
+        topic_fraction_sentence = ifelse(
+          sentence_score == 0 & score == 0, 
+          1 / num_topics_per_sentence, 
+          ifelse(sentence_score == 0, 
+                 1 / num_topics_per_sentence, 
+                 score / sentence_score)
+        ))%>%
+      ungroup()%>%
+      group_by(Date,topic_keyword)%>%
+      mutate(topic_fraction_document = sum(topic_fraction_sentence, na.rm = TRUE) / num_sentences
+      ) %>%
+      dplyr::select(Date, topic_keyword, topic_fraction_document) %>%
+      distinct()%>%
+      group_by(Date)%>%
+      mutate(sum = sum(topic_fraction_document))%>%
+      group_by(topic_keyword) %>%
+      summarise(
+        Mean = 100 * round(sum((topic_fraction_document)/total_documents), 5),  # Convert to percentage
+        .groups = 'drop'
+      )
+    
+  }
+  # Main process
+  sentence_scores <- calculate_sentence_scores(data)
+  sentence_count <- count_sentences(data)
+  topic_fraction <- calculate_topic_fractions(sentence_scores, sentence_count)
+  
+  return(topic_fraction)
+}
+
+
+############################################################
+# Function for heteroskedasticity and autocorrelation checks
+############################################################
+
+perform_tests <- function(model, model_name) {
+  library(car)
+  library(lmtest)
+  
+  # Breusch-Pagan test for heteroskedasticity
+  hetero_test <- tryCatch(
+    bptest(model),
+    error = function(e) NA
+  )
+  
+  # Durbin-Watson test for autocorrelation
+  auto_test <- tryCatch(
+    dwtest(model),
+    error = function(e) NA
+  )
+  
+  tibble(
+    Model = model_name,
+    BP_statistic = ifelse(is.na(hetero_test), NA, hetero_test$statistic),
+    BP_p_value = ifelse(is.na(hetero_test), NA, hetero_test$p.value),
+    BP_result = ifelse(is.na(hetero_test), "Test Failed", ifelse(hetero_test$p.value > 0.05, "Homoskedastic", "Heteroskedastic")),
+    DW_statistic = ifelse(is.na(auto_test), NA, auto_test$statistic),
+    DW_p_value = ifelse(is.na(auto_test), NA, auto_test$p.value),
+    DW_result = ifelse(is.na(auto_test), "Test Failed", ifelse(auto_test$p.value > 0.05, "Not autocorrelated", "Autocorrelated"))
+  )
+}
+
+############################################################
+# Function to adjust standard errors
+############################################################
+
+adjust_model <- function(model, heteroskedastic, autocorrelated) {
+  if (autocorrelated) {
+    # Apply HAC adjustment
+    coeftest(model, vcov = NeweyWest(model, lag = NULL, prewhite = FALSE))
+  } else if (heteroskedastic) {
+    # Apply HC1 adjustment
+    coeftest(model, vcov = vcovHC(model, type = "HC1"))
+  } else {
+    # No adjustment needed
+    coeftest(model)
+  }
+}
