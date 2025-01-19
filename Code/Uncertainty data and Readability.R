@@ -168,3 +168,27 @@ write.csv(CPI_FEDD, file = "CPI_FEDD.csv",row.names = FALSE)
 write.csv(CPI_FEDM, file = "CPI_FEDM.csv",row.names = FALSE)
 write.csv(GDP_FEDD, file = "GDP_FEDD.csv",row.names = FALSE)
 write.csv(GDP_FEDM, file = "GDP_FEDM.csv",row.names = FALSE)
+
+
+
+Minutes_FED<-read.csv("FOMC Minutes.csv")%>%
+  mutate(Date = sapply(Date, standardize_date))
+
+Minutes_ECB<-read.csv("ECB Accounts.csv")%>%
+  mutate(Date = sapply(Date, standardize_date))
+
+Decisions_FED<-read.csv("FOMC Statements.csv")%>%
+  mutate(Date = sapply(Date, standardize_date))
+
+Decisions_ECB<- read.csv("ECB Decisions.csv")%>%
+  mutate(Date = sapply(Date, standardize_date))
+
+readability_ECBD<-my_readability(Decisions_ECB)
+readability_FEDD<-my_readability(Decisions_FED)
+readability_ECBM<-my_readability(Minutes_ECB)
+readability_FEDM<-my_readability(Minutes_FED)
+
+write.csv(readability_ECBD, file = "readability_ECBD.csv",row.names = FALSE)
+write.csv(readability_ECBM, file = "readability_ECBM.csv",row.names = FALSE)
+write.csv(readability_FEDD, file = "readability_FEDD.csv",row.names = FALSE)
+write.csv(readability_FEDM, file = "readability_FEDM.csv",row.names = FALSE)
